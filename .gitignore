@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# uv / venv
+.venv/
+
+# Secrets
+.env
+.env.*
+
+# Crawl output / generated data (regenerate via `pwo dotgov` or `pwo crawl`)
+outputs/
+*.duckdb
+*.duckdb.wal
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Claude Code local settings
+.claude/

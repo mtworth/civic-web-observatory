@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>publicwebobservatory.org</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #111;
+  --white: #fff;
+  --gray-1: #f4f4f4;
+  --gray-2: #e0e0e0;
+  --gray-3: #999;
+  --gray-4: #555;
+  --fail: #c0392b;
+  --warn: #b9770e;
+  --ok: #2a9d2a;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  background: var(--white);
+  color: var(--black);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER ── */
+.site-header {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.wordmark {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--black);
+  text-decoration: none;
+  letter-spacing: .01em;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.75rem;
+  list-style: none;
+  align-items: baseline;
+}
+
+.site-nav button {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--gray-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color .12s;
+  letter-spacing: .01em;
+}
+.site-nav button:hover { color: var(--black); }
+.site-nav button.active {
+  color: var(--black);
+  font-weight: 500;
+}
+
+.header-rule {
+  max-width: 900px;
+  margin: 0 auto;
+  border: none;
+  border-top: 1px solid var(--gray-2);
+}
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ════════════════════════
+   LANDING
+════════════════════════ */
+.landing {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.landing-hero {
+  padding: 3.5rem 0 3rem;
+  max-width: 620px;
+}
+
+.landing-hero h1 {
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1.4;
+  letter-spacing: -.015em;
+  color: var(--black);
+  margin-bottom: .875rem;
+}
+
+.landing-hero h1 strong { font-weight: 500; }
+
+.landing-meta {
+  font-size: 14px;
+  color: var(--gray-3);
+  line-height: 1.65;
+  margin-bottom: 2rem;
+}
+
+.landing-meta strong { color: var(--black); font-weight: 500; }
+
+.hero-actions { display: flex; gap: 1.25rem; align-items: center; }
+
+.btn-primary {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--white);
+  background: var(--black);
+  border: none;
+  padding: 8px 18px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: opacity .12s;
+}
+.btn-primary:hover { opacity: .7; }
+
+.btn-ghost {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--gray-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color .12s;
+}
+.btn-ghost:hover { color: var(--black); }
+
+.scale-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--gray-2);
+  border-bottom: 1px solid var(--gray-2);
+  margin-bottom: 3.5rem;
+}
+
+.scale-stat { padding: 1.75rem 0; }
+.scale-stat:not(:last-child) {
+  border-right: 1px solid var(--gray-2);
+  padding-right: 2rem;
+  margin-right: 2rem;
+}
+
+.scale-n {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: -.025em;
+  line-height: 1;
+  margin-bottom: .3rem;
+}
+
+.scale-label { font-size: 12px; color: var(--gray-3); }
+
+.tracks-section { margin-bottom: 3.5rem; }
+
+.tracks-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  margin-bottom: 1.25rem;
+}
+
+.tracks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--gray-2);
+  border: 1px solid var(--gray-2);
+}
+
+.track-cell { background: var(--white); padding: 1rem 1.125rem; }
+.track-title { font-size: 13px; font-weight: 500; color: var(--black); margin-bottom: .25rem; }
+.track-desc { font-size: 12px; color: var(--gray-3); line-height: 1.5; }
+
+/* ════════════════════════
+   BROWSE
+════════════════════════ */
+.browse { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+
+.filter-bar {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  padding: 1.25rem 0 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gray-2);
+}
+
+.filter-input {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--black);
+  background: var(--white);
+  border: 1px solid var(--gray-2);
+  border-radius: 2px;
+  padding: 5px 10px;
+  width: 210px;
+  outline: none;
+  transition: border-color .12s;
+}
+.filter-input:focus { border-color: var(--black); }
+.filter-input::placeholder { color: var(--gray-3); }
+
+.filter-select {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--gray-4);
+  background: var(--white);
+  border: 1px solid var(--gray-2);
+  border-radius: 2px;
+  padding: 5px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--black); }
+
+.filter-count { font-size: 12px; color: var(--gray-3); margin-left: auto; }
+
+.data-table { width: 100%; border-collapse: collapse; margin-bottom: .75rem; }
+
+.data-table th {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  text-align: left;
+  padding: .625rem .75rem .625rem 0;
+  border-bottom: 1px solid var(--black);
+  white-space: nowrap;
+}
+.data-table th:last-child { text-align: right; padding-right: 0; }
+
+.data-table td {
+  padding: .625rem .75rem .625rem 0;
+  border-bottom: 1px solid var(--gray-2);
+  vertical-align: top;
+  font-size: 13px;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--gray-1); }
+
+.td-domain {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--black);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.td-domain:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+.td-org { font-size: 11px; color: var(--gray-3); margin-top: 2px; font-weight: 300; }
+.td-mono { font-family: var(--mono); font-size: 11px; color: var(--gray-4); }
+
+.td-files { font-family: var(--mono); font-size: 11px; letter-spacing: .05em; }
+.td-files span.on { color: var(--black); font-weight: 500; }
+.td-files span.off { color: var(--gray-2); }
+
+.td-status { text-align: right; font-family: var(--mono); font-size: 11px; white-space: nowrap; }
+.td-status::before { content: '●'; font-size: 8px; margin-right: 4px; vertical-align: middle; }
+.td-status.s-ok::before { color: var(--ok); }
+.td-status.s-blocked::before { color: var(--warn); }
+.td-status.s-failed::before { color: var(--fail); }
+
+.empty-row td { text-align: center; color: var(--gray-3); padding: 2.5rem 0; }
+
+.table-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 0 2.5rem;
+  border-top: 1px solid var(--gray-2);
+}
+.page-count { font-size: 12px; color: var(--gray-3); }
+.page-btns { display: flex; gap: .375rem; }
+.page-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-4);
+  background: var(--gray-1);
+  border: none;
+  padding: 4px 9px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .12s;
+}
+.page-btn:hover:not(:disabled) { background: var(--black); color: var(--white); }
+.page-btn:disabled { opacity: .35; cursor: default; }
+
+.browse-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; padding-bottom: 3rem; }
+
+.bnav-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  margin-bottom: .75rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--gray-2);
+}
+
+.state-grid { display: flex; flex-wrap: wrap; gap: .25rem; }
+
+.state-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-4);
+  background: var(--gray-1);
+  border: none;
+  padding: 3px 7px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.state-btn sup { font-size: 9px; color: var(--gray-3); margin-left: 1px; }
+.state-btn:hover { background: var(--black); color: var(--white); }
+.state-btn:hover sup { color: rgba(255,255,255,.5); }
+.state-btn.active { background: var(--black); color: var(--white); }
+.state-btn.active sup { color: rgba(255,255,255,.5); }
+
+.sector-list { display: flex; flex-direction: column; gap: .25rem; }
+
+.sector-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--gray-4);
+  background: var(--gray-1);
+  border: none;
+  padding: 5px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .12s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sector-btn span { font-family: var(--mono); font-size: 10px; color: var(--gray-3); }
+.sector-btn:hover { background: var(--black); color: var(--white); }
+.sector-btn:hover span { color: rgba(255,255,255,.5); }
+.sector-btn.active { background: var(--black); color: var(--white); }
+.sector-btn.active span { color: rgba(255,255,255,.5); }
+
+/* ════════════════════════
+   INSIGHTS
+════════════════════════ */
+.insights { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+.insights-header { padding: 3rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
+.insights-header h2 { font-size: 18px; font-weight: 400; letter-spacing: -.01em; margin-bottom: .375rem; }
+.insights-header p { font-size: 13px; color: var(--gray-3); line-height: 1.6; }
+
+.insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 3rem; }
+.insight-grid.full { grid-template-columns: 1fr; }
+
+.insight-panel-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  margin-bottom: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--gray-2);
+}
+
+.bar-row { display: flex; align-items: center; gap: .75rem; padding: .375rem 0; }
+.bar-label { font-size: 12px; color: var(--gray-4); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 6px; background: var(--gray-1); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--black); border-radius: 2px; }
+.bar-value { font-family: var(--mono); font-size: 11px; color: var(--gray-4); width: 60px; flex-shrink: 0; text-align: right; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--gray-2); border: 1px solid var(--gray-2); margin-bottom: 3rem; }
+.kpi-cell { background: var(--white); padding: 1rem 1.125rem; }
+.kpi-n { font-size: 22px; font-weight: 300; letter-spacing: -.02em; line-height: 1; margin-bottom: .3rem; }
+.kpi-label { font-size: 11px; color: var(--gray-3); }
+
+/* ════════════════════════
+   DOMAIN PROFILE
+════════════════════════ */
+.domain-profile { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+.domain-back {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--gray-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 1.5rem 0 0;
+}
+.domain-back:hover { color: var(--black); }
+
+.domain-header { padding: 1rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
+.domain-name { font-family: var(--mono); font-size: 20px; font-weight: 500; margin-bottom: .375rem; }
+.domain-sub { font-size: 13px; color: var(--gray-3); }
+
+.field-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
+
+.field-group-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  margin-bottom: .75rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--gray-2);
+}
+
+.field-row { display: flex; justify-content: space-between; gap: .5rem; padding: .3rem 0; font-size: 12.5px; }
+.field-key { color: var(--gray-3); }
+.field-val { font-family: var(--mono); color: var(--black); text-align: right; }
+.field-val.ok { color: var(--ok); }
+.field-val.fail { color: var(--fail); }
+
+.history-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+.history-table th {
+  font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--gray-3); text-align: left; padding: .5rem .75rem .5rem 0;
+  border-bottom: 1px solid var(--black); white-space: nowrap;
+}
+.history-table td { padding: .5rem .75rem .5rem 0; border-bottom: 1px solid var(--gray-2); font-size: 12.5px; vertical-align: top; }
+.history-table tr:last-child td { border-bottom: none; }
+
+.methods-body { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+.methods-body h2 { font-size: 18px; font-weight: 400; margin-bottom: 1rem; }
+.methods-body h3 { font-size: 13px; font-weight: 500; margin: 1.75rem 0 .5rem; }
+.methods-body p, .methods-body li { font-size: 13px; color: var(--gray-4); line-height: 1.65; }
+.methods-body ul { padding-left: 1.25rem; margin-bottom: .5rem; }
+.methods-body code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--gray-1);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ── FOOTER ── */
+.site-footer {
+  border-top: 1px solid var(--gray-2);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.footer-copy { font-size: 12px; color: var(--gray-3); }
+.footer-links { display: flex; gap: 1.25rem; list-style: none; }
+.footer-links a { font-size: 12px; color: var(--gray-3); text-decoration: none; }
+.footer-links a:hover { color: var(--black); }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="site-header">
+  <a class="wordmark" onclick="switchTab('home')">publicwebobservatory.org</a>
+  <ul class="site-nav">
+    <li><button id="nav-home" class="active" onclick="switchTab('home')">Overview</button></li>
+    <li><button id="nav-browse" onclick="switchTab('browse')">Browse</button></li>
+    <li><button id="nav-insights" onclick="switchTab('insights')">Insights</button></li>
+    <li><button id="nav-methods" onclick="switchTab('methods')" style="color:var(--gray-3)">Methods</button></li>
+  </ul>
+</div>
+<hr class="header-rule">
+
+<!-- ══ LANDING ══ -->
+<div id="view-home" class="view active">
+  <div class="landing">
+
+    <div class="landing-hero">
+      <h1>Mapping the <strong>digital infrastructure</strong> of the American public web</h1>
+      <p class="landing-meta" id="hero-meta">
+        Loading dataset…
+      </p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="switchTab('browse')">Browse domains</button>
+        <button class="btn-ghost" onclick="switchTab('insights')">View insights →</button>
+      </div>
+    </div>
+
+    <div class="scale-row">
+      <div class="scale-stat">
+        <div class="scale-n" id="stat-total">—</div>
+        <div class="scale-label">Domains checked</div>
+      </div>
+      <div class="scale-stat">
+        <div class="scale-n" id="stat-states">—</div>
+        <div class="scale-label">States &amp; territories</div>
+      </div>
+      <div class="scale-stat">
+        <div class="scale-n" id="stat-types">—</div>
+        <div class="scale-label">Entity types mapped</div>
+      </div>
+    </div>
+
+    <div class="tracks-section">
+      <div class="tracks-eyebrow">What we track</div>
+      <div class="tracks-grid">
+        <div class="track-cell">
+          <div class="track-title">Availability &amp; blocking</div>
+          <div class="track-desc">Homepage status codes, CAPTCHA gates, bot challenges, and CDN blocks encountered during a transparent crawl.</div>
+        </div>
+        <div class="track-cell">
+          <div class="track-title">HTTPS &amp; TLS</div>
+          <div class="track-desc">Certificate validity, issuer, expiry window, and whether plain HTTP is redirected to HTTPS.</div>
+        </div>
+        <div class="track-cell">
+          <div class="track-title">DNS &amp; hosting</div>
+          <div class="track-desc">Nameservers, ASN ownership, and pattern-matched hosting/CDN provider hints.</div>
+        </div>
+        <div class="track-cell">
+          <div class="track-title">Machine-readable files</div>
+          <div class="track-desc">robots.txt, sitemap.xml, and the emerging llms.txt convention.</div>
+        </div>
+        <div class="track-cell">
+          <div class="track-title">Basic HTML signals</div>
+          <div class="track-desc">Page title, meta description, lang attribute, canonical URL, mobile viewport.</div>
+        </div>
+        <div class="track-cell">
+          <div class="track-title">Static accessibility</div>
+          <div class="track-desc">Missing alt text, unlabeled form inputs, and missing landmark regions — raw counts, not a score.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ BROWSE ══ -->
+<div id="view-browse" class="view">
+  <div class="browse">
+
+    <div class="filter-bar">
+      <input class="filter-input" type="text" id="f-search" placeholder="Search domains or organizations…">
+      <select class="filter-select" id="f-type"><option value="">All entity types</option></select>
+      <select class="filter-select" id="f-status"><option value="">All statuses</option></select>
+      <select class="filter-select" id="f-state"><option value="">All states</option></select>
+      <span class="filter-count" id="browse-count">loading…</span>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Domain / Organization</th>
+          <th>Type</th>
+          <th>State</th>
+          <th>Hosting</th>
+          <th>HTTPS / TLS</th>
+          <th>Files</th>
+          <th style="text-align:right">Status</th>
+        </tr>
+      </thead>
+      <tbody id="browse-tbody">
+        <tr class="empty-row"><td colspan="7">Loading…</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-foot">
+      <span class="page-count" id="page-count"></span>
+      <div class="page-btns">
+        <button class="page-btn" id="btn-prev" onclick="prevPage()">← Prev</button>
+        <button class="page-btn" id="btn-next" onclick="nextPage()">Next →</button>
+      </div>
+    </div>
+
+    <div class="browse-nav">
+      <div>
+        <div class="bnav-label">Browse by state</div>
+        <div class="state-grid" id="state-grid">—</div>
+      </div>
+      <div>
+        <div class="bnav-label">Browse by entity type</div>
+        <div class="sector-list" id="org-type-list">—</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ INSIGHTS ══ -->
+<div id="view-insights" class="view">
+  <div class="insights">
+
+    <div class="insights-header">
+      <h2>Insights</h2>
+      <p>Aggregate signals computed directly from the live dataset below. No opaque scores — every number here is a raw count or percentage of a specific, individually verifiable field.</p>
+    </div>
+
+    <div class="kpi-row" id="insights-kpis"></div>
+
+    <div class="insight-grid">
+      <div>
+        <div class="insight-panel-title">Collection status</div>
+        <div id="insight-status"></div>
+      </div>
+      <div>
+        <div class="insight-panel-title">Hosting / nameserver provider</div>
+        <div id="insight-hosting"></div>
+      </div>
+    </div>
+
+    <div class="insight-grid">
+      <div>
+        <div class="insight-panel-title">HTTPS &amp; TLS</div>
+        <div id="insight-https"></div>
+      </div>
+      <div>
+        <div class="insight-panel-title">Machine-readable files</div>
+        <div id="insight-files"></div>
+      </div>
+    </div>
+
+    <div class="insight-grid full">
+      <div>
+        <div class="insight-panel-title">Static accessibility signals</div>
+        <div id="insight-a11y"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ DOMAIN PROFILE ══ -->
+<div id="view-domain" class="view">
+  <div class="domain-profile">
+    <button class="domain-back" onclick="switchTab('browse')">← Back to browse</button>
+    <div id="domain-content">Loading…</div>
+  </div>
+</div>
+
+<!-- ══ METHODS ══ -->
+<div id="view-methods" class="view">
+  <div class="methods-body">
+    <h2>Methodology</h2>
+    <p>Public Web Observatory performs lightweight, transparent, homepage-only checks of public-interest websites. It records availability, machine-readability, hosting/DNS hints, and automated accessibility signals. It does not bypass bot protections, crawl private areas, or perform vulnerability scanning.</p>
+
+    <h3>What gets crawled</h3>
+    <p>For each domain, the crawler requests only: the homepage over HTTPS and HTTP, <code>/robots.txt</code>, <code>/sitemap.xml</code>, and <code>/llms.txt</code>. No deeper links are followed.</p>
+
+    <h3>Crawler identity</h3>
+    <p>Every request identifies itself with a transparent User-Agent:</p>
+    <p><code>PublicWebObservatoryBot/0.1 (+https://publicwebobservatory.org/bot; contact: hello@publicwebobservatory.org)</code></p>
+
+    <h3>What it does not do</h3>
+    <ul>
+      <li>No proxy rotation or fake browser fingerprinting</li>
+      <li>No CAPTCHA solving or bot-challenge evasion</li>
+      <li>No login attempts or admin path probing</li>
+      <li>No aggressive retries — blocks are recorded, not bypassed</li>
+    </ul>
+
+    <h3>Scoring</h3>
+    <p>Raw observations only. This dataset deliberately avoids collapsing signals into a single opaque score — every field shown (HTTPS validity, TLS issuer, missing alt text, etc.) is a direct, individually verifiable fact about the domain at the time it was checked.</p>
+
+    <h3>Current data source</h3>
+    <p>This dataset currently covers a random sample of domains from the CISA <code>.gov</code> registry (<a href="https://github.com/cisagov/dotgov-data" style="color:var(--gray-4)">cisagov/dotgov-data</a>). Coverage will expand to other public-interest domain lists over time.</p>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <span class="footer-copy" id="footer-copy">publicwebobservatory.org</span>
+  <ul class="footer-links">
+    <li><a onclick="switchTab('methods')">Methodology</a></li>
+    <li><a href="/llms.txt">llms.txt</a></li>
+    <li><a href="/api/health">API</a></li>
+  </ul>
+</footer>
+
+<script>
+const API = '/api';
+const cache = {};
+const browseState = { search: '', status: '', org_type: '', state: '', limit: 25, offset: 0, total: 0 };
+let searchDebounce = null;
+
+function switchTab(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.site-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const btn = document.getElementById('nav-' + name);
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+async function fetchJSON(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(path + ': ' + res.status);
+  return res.json();
+}
+
+function fmtDate(iso) {
+  if (!iso) return 'unknown';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function pct(n, total) {
+  if (!total) return '0%';
+  return (100 * n / total).toFixed(1) + '%';
+}
+
+// ── Initial load: fetch everything stats-related once ──
+async function loadStats() {
+  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y] = await Promise.all([
+    fetchJSON(`${API}/summary`),
+    fetchJSON(`${API}/stats/https`),
+    fetchJSON(`${API}/stats/hosting`),
+    fetchJSON(`${API}/stats/files`),
+    fetchJSON(`${API}/stats/status`),
+    fetchJSON(`${API}/stats/states`),
+    fetchJSON(`${API}/stats/org-types`),
+    fetchJSON(`${API}/stats/tls`),
+    fetchJSON(`${API}/stats/accessibility`),
+  ]);
+  Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y });
+}
+
+function renderOverview() {
+  const { summary, states, orgTypes } = cache;
+  if (!summary || !summary.dataset_domains_total) return;
+  const total = summary.dataset_domains_total;
+
+  document.getElementById('stat-total').textContent = total.toLocaleString();
+  document.getElementById('stat-states').textContent = states.length;
+  document.getElementById('stat-types').textContent = orgTypes.length;
+
+  document.getElementById('hero-meta').innerHTML =
+    `Homepage availability, HTTPS/TLS configuration, machine-readability, hosting infrastructure, ` +
+    `and automated accessibility signals for <strong>${total.toLocaleString()}</strong> ` +
+    `domains sampled from the CISA <strong>.gov</strong> registry. Crawled transparently — no bot-protection bypass, no deep crawling.`;
+
+  document.getElementById('footer-copy').textContent =
+    `publicwebobservatory.org · CISA .gov registry sample · Last observation ${fmtDate(summary.dataset_last_checked_at)}`;
+}
+
+function sumBlocked(status) {
+  const blockedStatuses = ['captcha', 'bot_challenge', 'blocked_by_cdn', 'http_403', 'http_429'];
+  return status.filter(s => blockedStatuses.includes(s.status)).reduce((a, s) => a + s.count, 0);
+}
+
+// ── Insights ──
+function bar(label, count, max, valueLabel) {
+  const w = max ? Math.max(2, Math.round(100 * count / max)) : 0;
+  return `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%"></div></div>
+      <div class="bar-value">${valueLabel != null ? valueLabel : count.toLocaleString()}</div>
+    </div>
+  `;
+}
+
+function renderInsights() {
+  const { summary, https, hosting, files, status, tls, a11y } = cache;
+  if (!summary || !status.length) return;
+  const total = status.reduce((a, s) => a + s.count, 0);
+  const ok = (status.find(s => s.status === 'ok') || {}).count || 0;
+  const blocked = sumBlocked(status);
+
+  document.getElementById('insights-kpis').innerHTML = `
+    <div class="kpi-cell"><div class="kpi-n">${pct(ok, total)}</div><div class="kpi-label">Reachable (ok)</div></div>
+    <div class="kpi-cell"><div class="kpi-n">${pct(blocked, total)}</div><div class="kpi-label">Blocked / challenged</div></div>
+    <div class="kpi-cell"><div class="kpi-n">${https.https_pct || 0}%</div><div class="kpi-label">Serve HTTPS</div></div>
+    <div class="kpi-cell"><div class="kpi-n">${pct(files.llms_txt, total)}</div><div class="kpi-label">Serve llms.txt</div></div>
+  `;
+
+  const statusMax = Math.max(...status.map(s => s.count), 1);
+  document.getElementById('insight-status').innerHTML = status
+    .map(s => bar(s.status, s.count, statusMax, `${s.count.toLocaleString()} (${pct(s.count, total)})`))
+    .join('');
+
+  const topHosting = hosting.slice(0, 8);
+  const hostingMax = Math.max(...topHosting.map(h => h.count), 1);
+  document.getElementById('insight-hosting').innerHTML = topHosting
+    .map(h => bar(h.provider, h.count, hostingMax, `${h.count.toLocaleString()} (${pct(h.count, total)})`))
+    .join('');
+
+  const httpNoRedirect = (https.https_available || 0) - (https.redirects_to_https || 0);
+  const httpsMax = total;
+  document.getElementById('insight-https').innerHTML = [
+    bar('HTTPS available', https.https_available, httpsMax, `${https.https_pct}%`),
+    bar('HTTP→HTTPS redirect', https.redirects_to_https, httpsMax, `${https.redirects_pct}%`),
+    bar('HTTPS but no redirect', httpNoRedirect, httpsMax),
+    bar('Valid TLS cert', tls.valid, httpsMax, pct(tls.valid, total)),
+    bar('TLS expiring < 30d', tls.expiring_30d, httpsMax),
+  ].join('');
+
+  document.getElementById('insight-files').innerHTML = [
+    bar('robots.txt', files.robots_txt, total, pct(files.robots_txt, total)),
+    bar('sitemap.xml', files.sitemap_xml, total, pct(files.sitemap_xml, total)),
+    bar('llms.txt', files.llms_txt, total, pct(files.llms_txt, total)),
+  ].join('');
+
+  document.getElementById('insight-a11y').innerHTML = [
+    bar('Has <title>', Math.round(a11y.pct_has_title * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_title}%`),
+    bar('Has html lang attr', Math.round(a11y.pct_has_html_lang * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_html_lang}%`),
+    bar('Has main landmark', Math.round(a11y.pct_has_main_landmark * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_main_landmark}%`),
+    bar('Has nav landmark', Math.round(a11y.pct_has_nav_landmark * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_nav_landmark}%`),
+    bar('Avg images missing alt', a11y.avg_images_missing_alt, 10, a11y.avg_images_missing_alt),
+    bar('Avg inputs missing labels', a11y.avg_inputs_missing_labels, 10, a11y.avg_inputs_missing_labels),
+  ].join('');
+}
+
+// ── Browse ──
+function renderFilterOptions() {
+  const typeSel = document.getElementById('f-type');
+  cache.orgTypes.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.org_type;
+    opt.textContent = `${t.org_type} (${t.count})`;
+    typeSel.appendChild(opt);
+  });
+
+  const statusSel = document.getElementById('f-status');
+  cache.status.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.status;
+    opt.textContent = `${s.status} (${s.count})`;
+    statusSel.appendChild(opt);
+  });
+
+  const stateSel = document.getElementById('f-state');
+  cache.states.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.state;
+    opt.textContent = `${s.state} (${s.count})`;
+    stateSel.appendChild(opt);
+  });
+
+  document.getElementById('state-grid').innerHTML = cache.states.map(s =>
+    `<button class="state-btn" onclick="filterByState('${s.state}')">${s.state}<sup>${s.count}</sup></button>`
+  ).join('');
+
+  document.getElementById('org-type-list').innerHTML = cache.orgTypes.map(t =>
+    `<button class="sector-btn" onclick="filterByOrgType('${t.org_type}')">${t.org_type}<span>${t.count}</span></button>`
+  ).join('');
+}
+
+function filterByState(state) {
+  browseState.state = state;
+  browseState.offset = 0;
+  document.getElementById('f-state').value = state;
+  switchTab('browse');
+  loadBrowse();
+}
+
+function filterByOrgType(orgType) {
+  browseState.org_type = orgType;
+  browseState.offset = 0;
+  document.getElementById('f-type').value = orgType;
+  switchTab('browse');
+  loadBrowse();
+}
+
+function statusClass(status, blockType) {
+  if (status === 'ok') return 's-ok';
+  if (blockType && blockType !== 'none') return 's-blocked';
+  return 's-failed';
+}
+
+function fileBadge(label, available) {
+  return `<span class="${available ? 'on' : 'off'}">${label}</span>`;
+}
+
+async function loadBrowse() {
+  const tbody = document.getElementById('browse-tbody');
+  tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Loading…</td></tr>';
+
+  const params = new URLSearchParams();
+  params.set('limit', browseState.limit);
+  params.set('offset', browseState.offset);
+  if (browseState.search) params.set('search', browseState.search);
+  if (browseState.status) params.set('status', browseState.status);
+  if (browseState.org_type) params.set('org_type', browseState.org_type);
+  if (browseState.state) params.set('state', browseState.state);
+
+  const data = await fetchJSON(`${API}/domains?${params}`);
+  browseState.total = data.total;
+
+  if (data.items.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No domains match these filters.</td></tr>';
+  } else {
+    tbody.innerHTML = data.items.map(d => `
+      <tr>
+        <td>
+          <div class="td-domain" onclick="showDomain('${d.domain}')">${d.domain}</div>
+          ${d.org_name ? `<div class="td-org">${d.org_name}</div>` : ''}
+        </td>
+        <td class="td-mono">${d.org_type || '—'}</td>
+        <td class="td-mono">${d.state || '—'}</td>
+        <td class="td-mono">${d.nameserver_provider_hint || 'unknown'}</td>
+        <td class="td-mono">${d.https_available ? (d.tls_valid ? 'valid' : 'invalid') : 'no https'}</td>
+        <td class="td-files">${fileBadge('R', d.robots_txt_available)} ${fileBadge('S', d.sitemap_xml_available)} ${fileBadge('L', d.llms_txt_available)}</td>
+        <td class="td-status ${statusClass(d.collection_status, d.homepage_block_type)}">${d.collection_status}</td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('browse-count').textContent = `${browseState.total.toLocaleString()} domains`;
+  const start = browseState.total === 0 ? 0 : browseState.offset + 1;
+  const end = Math.min(browseState.offset + browseState.limit, browseState.total);
+  document.getElementById('page-count').textContent = `Showing ${start}–${end} of ${browseState.total.toLocaleString()}`;
+  document.getElementById('btn-prev').disabled = browseState.offset === 0;
+  document.getElementById('btn-next').disabled = end >= browseState.total;
+}
+
+// ── Domain profile ──
+function fieldRow(key, val, boolish) {
+  let cls = '';
+  let display = val === null || val === undefined || val === '' ? '—' : val;
+  if (boolish) {
+    cls = val ? 'ok' : 'fail';
+    display = val ? 'yes' : 'no';
+  }
+  return `<div class="field-row"><span class="field-key">${key}</span><span class="field-val ${cls}">${display}</span></div>`;
+}
+
+async function showDomain(domain) {
+  switchTab('domain');
+  document.getElementById('domain-content').innerHTML = 'Loading…';
+  try {
+    const [d, history] = await Promise.all([
+      fetchJSON(`${API}/domains/${encodeURIComponent(domain)}`),
+      fetchJSON(`${API}/domains/${encodeURIComponent(domain)}/history`),
+    ]);
+    renderDomainProfile(d, history);
+  } catch (e) {
+    console.error(e);
+    document.getElementById('domain-content').innerHTML = 'Failed to load this domain.';
+  }
+}
+
+function renderDomainProfile(d, history) {
+  const historyRows = history.slice().reverse().map(h => `
+    <tr>
+      <td class="td-mono">${fmtDate(h.checked_at)}</td>
+      <td class="td-status ${statusClass(h.collection_status, h.homepage_block_type)}">${h.collection_status}</td>
+      <td class="td-mono">${h.homepage_status_code ?? '—'}</td>
+      <td class="td-mono">${h.https_available ? (h.tls_valid ? 'valid' : 'invalid') : 'no https'}</td>
+      <td class="td-files">${fileBadge('R', h.robots_txt_available)} ${fileBadge('S', h.sitemap_xml_available)} ${fileBadge('L', h.llms_txt_available)}</td>
+      <td class="td-mono">${h.nameserver_provider_hint || '—'}</td>
+      <td class="td-mono">${h.homepage_response_time_ms != null ? h.homepage_response_time_ms + 'ms' : '—'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('domain-content').innerHTML = `
+    <div class="domain-header">
+      <div class="domain-name">${d.domain}</div>
+      <div class="domain-sub">${d.org_name || 'No organization name on file'} · ${d.org_type || 'unknown type'} · ${d.state || 'unknown state'} · last checked ${fmtDate(d.checked_at)}</div>
+    </div>
+
+    <div class="field-grid">
+      <div>
+        <div class="field-group-title">Status &amp; identity</div>
+        ${fieldRow('Collection status', d.collection_status)}
+        ${fieldRow('Sector', d.sector)}
+        ${fieldRow('Source', d.source)}
+        ${fieldRow('Crawler version', d.crawler_version)}
+      </div>
+      <div>
+        <div class="field-group-title">DNS &amp; hosting</div>
+        ${fieldRow('Primary IP', d.primary_ip)}
+        ${fieldRow('ASN', d.host_asn)}
+        ${fieldRow('ASN org', d.host_asn_org)}
+        ${fieldRow('Nameserver hint', d.nameserver_provider_hint)}
+        ${fieldRow('CNAME hint', d.cname_provider_hint)}
+      </div>
+      <div>
+        <div class="field-group-title">HTTPS / TLS</div>
+        ${fieldRow('HTTPS available', d.https_available, true)}
+        ${fieldRow('Redirects to HTTPS', d.http_redirects_to_https, true)}
+        ${fieldRow('TLS valid', d.tls_valid, true)}
+        ${fieldRow('TLS issuer', d.tls_issuer)}
+        ${fieldRow('TLS days until expiry', d.tls_days_until_expiry)}
+      </div>
+      <div>
+        <div class="field-group-title">Machine-readable files</div>
+        ${fieldRow('robots.txt', d.robots_txt_available, true)}
+        ${fieldRow('sitemap.xml', d.sitemap_xml_available, true)}
+        ${fieldRow('llms.txt', d.llms_txt_available, true)}
+      </div>
+      <div>
+        <div class="field-group-title">Basic HTML</div>
+        ${fieldRow('Page title', d.page_title)}
+        ${fieldRow('Meta description', d.meta_description_present, true)}
+        ${fieldRow('html lang attr', d.html_lang_present, true)}
+        ${fieldRow('Mobile viewport', d.mobile_viewport_present, true)}
+        ${fieldRow('H1 count', d.h1_count)}
+      </div>
+      <div>
+        <div class="field-group-title">Static accessibility</div>
+        ${fieldRow('Has &lt;title&gt;', d.a11y_has_title, true)}
+        ${fieldRow('Has html lang', d.a11y_has_html_lang, true)}
+        ${fieldRow('Has main landmark', d.a11y_has_main_landmark, true)}
+        ${fieldRow('Has nav landmark', d.a11y_has_nav_landmark, true)}
+        ${fieldRow('Images missing alt', d.a11y_images_missing_alt)}
+        ${fieldRow('Inputs missing labels', d.a11y_inputs_missing_labels)}
+      </div>
+    </div>
+
+    <div class="insight-panel-title">History (${history.length} run${history.length === 1 ? '' : 's'})</div>
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Checked</th><th>Status</th><th>HTTP code</th><th>HTTPS/TLS</th><th>Files</th><th>Hosting</th><th>Response</th>
+        </tr>
+      </thead>
+      <tbody>${historyRows || '<tr><td colspan="7">No history yet.</td></tr>'}</tbody>
+    </table>
+  `;
+}
+
+function prevPage() {
+  browseState.offset = Math.max(0, browseState.offset - browseState.limit);
+  loadBrowse();
+}
+function nextPage() {
+  browseState.offset += browseState.limit;
+  loadBrowse();
+}
+
+function wireFilters() {
+  document.getElementById('f-search').addEventListener('input', e => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      browseState.search = e.target.value;
+      browseState.offset = 0;
+      loadBrowse();
+    }, 300);
+  });
+  document.getElementById('f-type').addEventListener('change', e => {
+    browseState.org_type = e.target.value;
+    browseState.offset = 0;
+    loadBrowse();
+  });
+  document.getElementById('f-status').addEventListener('change', e => {
+    browseState.status = e.target.value;
+    browseState.offset = 0;
+    loadBrowse();
+  });
+  document.getElementById('f-state').addEventListener('change', e => {
+    browseState.state = e.target.value;
+    browseState.offset = 0;
+    loadBrowse();
+  });
+}
+
+(async function init() {
+  wireFilters();
+  try {
+    await loadStats();
+    renderOverview();
+    renderInsights();
+    renderFilterOptions();
+    await loadBrowse();
+  } catch (e) {
+    console.error('Failed to load data', e);
+    document.getElementById('hero-meta').textContent = 'Failed to load dataset — is the API running?';
+  }
+})();
+</script>
+</body>
+</html>

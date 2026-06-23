@@ -1,0 +1,30 @@
+[project]
+name = "public-web-observatory"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx[http2]",
+    "beautifulsoup4",
+    "lxml",
+    "dnspython",
+    "ipwhois",
+    "cryptography",
+    "duckdb",
+    "pydantic",
+    "tenacity",
+    "click",
+    "rich",
+    "fastapi",
+    "uvicorn[standard]",
+    "pytz",
+]
+
+[project.scripts]
+pwo = "pwo.cli:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pwo"]

@@ -1,0 +1,20 @@
+# Public Web Observatory
+
+> Public Web Observatory performs lightweight, transparent, homepage-only checks of public-interest websites (government and nonprofit domains). It records availability, machine-readability, hosting/DNS hints, and automated accessibility signals. It does not bypass bot protections, crawl private areas, or perform vulnerability scanning.
+
+This site exposes its own dataset through a JSON API.
+
+## API
+
+- [GET /api/summary](/api/summary): latest crawl run summary
+- [GET /api/domains](/api/domains): paginated, filterable domain list (params: limit, offset, status, org_type, state, search)
+- [GET /api/domains/{domain}](/api/domains/{domain}): full observation for a single domain
+- [GET /api/stats/status](/api/stats/status): collection status breakdown
+- [GET /api/stats/https](/api/stats/https): HTTPS/TLS adoption
+- [GET /api/stats/hosting](/api/stats/hosting): hosting provider breakdown
+- [GET /api/stats/files](/api/stats/files): robots.txt / sitemap.xml / llms.txt availability
+- [GET /api/stats/accessibility](/api/stats/accessibility): static accessibility aggregates
+
+## Source
+
+- [cisagov/dotgov-data](https://github.com/cisagov/dotgov-data): current data source (.gov zone file)
