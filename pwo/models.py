@@ -35,6 +35,7 @@ class DomainObservation(BaseModel):
     homepage_redirect_count: Optional[int] = None
     homepage_error: Optional[str] = None
     homepage_block_type: str = "none"
+    homepage_ua_retry_succeeded: bool = False
 
     # HTTPS / TLS
     https_available: Optional[bool] = None

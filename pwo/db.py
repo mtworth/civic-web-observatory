@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS observations (
     homepage_redirect_count INTEGER,
     homepage_error VARCHAR,
     homepage_block_type VARCHAR,
+    homepage_ua_retry_succeeded BOOLEAN,
 
     https_available BOOLEAN,
     http_available BOOLEAN,
@@ -123,6 +124,10 @@ ALTER TABLE observations ADD COLUMN IF NOT EXISTS sector VARCHAR
 
 RUN_ID_MIGRATION = """
 ALTER TABLE observations ADD COLUMN IF NOT EXISTS run_id VARCHAR
+"""
+
+UA_RETRY_MIGRATION = """
+ALTER TABLE observations ADD COLUMN IF NOT EXISTS homepage_ua_retry_succeeded BOOLEAN
 """
 
 INDEXES = [
@@ -241,9 +246,10 @@ def open_db(db_path: str) -> duckdb.DuckDBPyConnection:
     conn = duckdb.connect(db_path)
     conn.execute(SCHEMA)
     conn.execute(RUN_SUMMARY_SCHEMA)
-    # Migrate sector/run_id columns onto existing tables
+    # Migrate sector/run_id/ua_retry columns onto existing tables
     conn.execute(SECTOR_MIGRATION)
     conn.execute(RUN_ID_MIGRATION)
+    conn.execute(UA_RETRY_MIGRATION)
     # Indexes (idempotent)
     for idx_sql in INDEXES:
         conn.execute(idx_sql)

@@ -217,6 +217,26 @@ def get_file_availability(conn: duckdb.DuckDBPyConnection) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Block type breakdown
+# ---------------------------------------------------------------------------
+
+def get_block_type_breakdown(conn: duckdb.DuckDBPyConnection) -> list[dict]:
+    """Return [{block_type, count}, ...] for all block types (including 'none'), sorted by count desc."""
+    try:
+        cur = conn.execute("""
+            SELECT
+                COALESCE(homepage_block_type, 'none') AS block_type,
+                COUNT(*) AS count
+            FROM v_current
+            GROUP BY 1
+            ORDER BY 2 DESC
+        """)
+        return _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        return []
+
+
+# ---------------------------------------------------------------------------
 # Blocked domains
 # ---------------------------------------------------------------------------
 
