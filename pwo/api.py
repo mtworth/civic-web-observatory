@@ -103,6 +103,12 @@ def get_accessibility_summary(request: Request):
     return _queries().get_accessibility_summary(conn)
 
 
+@app.get("/api/stats/technologies")
+def get_tech_breakdown(request: Request):
+    conn = request.app.state.db
+    return _queries().get_tech_breakdown(conn)
+
+
 @app.get("/api/domains")
 def list_domains(
     request: Request,

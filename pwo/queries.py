@@ -473,6 +473,30 @@ def get_org_type_breakdown(conn: duckdb.DuckDBPyConnection) -> list[dict]:
 # Accessibility summary
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Technology breakdown
+# ---------------------------------------------------------------------------
+
+def get_tech_breakdown(conn: duckdb.DuckDBPyConnection, limit: int = 30) -> list[dict]:
+    """Return [{technology, count}, ...] sorted by count descending."""
+    try:
+        cur = conn.execute("""
+            SELECT t AS technology, COUNT(*) AS count
+            FROM v_current, UNNEST(technologies) AS t(t)
+            WHERE technologies IS NOT NULL AND len(technologies) > 0
+            GROUP BY 1
+            ORDER BY 2 DESC
+            LIMIT ?
+        """, [limit])
+        return _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Accessibility summary
+# ---------------------------------------------------------------------------
+
 def get_accessibility_summary(conn: duckdb.DuckDBPyConnection) -> dict:
     """Return aggregate static a11y metrics across all scanned domains."""
     try:

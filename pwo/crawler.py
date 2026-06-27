@@ -7,6 +7,7 @@ from .config import Config
 from .models import DomainObservation
 from . import dns_checks, http_checks, tls_checks, machine_files, html_checks
 from . import accessibility_static, hosting_hints, status as status_mod
+from . import detector as tech_detector
 
 
 async def crawl_domain(
@@ -44,6 +45,7 @@ async def crawl_domain(
         data["stage"] = "http"
         http_result = await http_checks.check_homepage(client, domain, config)
         html_body: bytes | None = http_result.pop("_html_body", None)
+        response_headers: dict = http_result.pop("_response_headers", {})
         data.update(http_result)
 
         # TLS (only if HTTPS responded at all)
@@ -66,6 +68,11 @@ async def crawl_domain(
             # Static accessibility
             data["stage"] = "static_a11y"
             data.update(accessibility_static.check_static_a11y(html_body))
+
+            # Technology fingerprinting
+            data["stage"] = "tech_detect"
+            html_str = html_body.decode("utf-8", errors="replace")
+            data["technologies"] = tech_detector.detect(html_str, response_headers)
 
         # Hosting hints (needs primary_ip from DNS)
         if data.get("primary_ip"):

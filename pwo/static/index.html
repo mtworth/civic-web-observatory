@@ -648,6 +648,13 @@ body {
       </div>
     </div>
 
+    <div class="insight-grid full">
+      <div>
+        <div class="insight-panel-title">Technology stack</div>
+        <div id="insight-technologies"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -731,7 +738,7 @@ function pct(n, total) {
 
 // ── Initial load: fetch everything stats-related once ──
 async function loadStats() {
-  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y] = await Promise.all([
+  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y, technologies] = await Promise.all([
     fetchJSON(`${API}/summary`),
     fetchJSON(`${API}/stats/https`),
     fetchJSON(`${API}/stats/hosting`),
@@ -741,8 +748,9 @@ async function loadStats() {
     fetchJSON(`${API}/stats/org-types`),
     fetchJSON(`${API}/stats/tls`),
     fetchJSON(`${API}/stats/accessibility`),
+    fetchJSON(`${API}/stats/technologies`),
   ]);
-  Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y });
+  Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y, technologies });
 }
 
 function renderOverview() {
@@ -781,7 +789,7 @@ function bar(label, count, max, valueLabel) {
 }
 
 function renderInsights() {
-  const { summary, https, hosting, files, status, tls, a11y } = cache;
+  const { summary, https, hosting, files, status, tls, a11y, technologies } = cache;
   if (!summary || !status.length) return;
   const total = status.reduce((a, s) => a + s.count, 0);
   const ok = (status.find(s => s.status === 'ok') || {}).count || 0;
@@ -829,6 +837,12 @@ function renderInsights() {
     bar('Avg images missing alt', a11y.avg_images_missing_alt, 10, a11y.avg_images_missing_alt),
     bar('Avg inputs missing labels', a11y.avg_inputs_missing_labels, 10, a11y.avg_inputs_missing_labels),
   ].join('');
+
+  const topTech = (technologies || []).slice(0, 15);
+  const techMax = topTech.length ? Math.max(...topTech.map(t => t.count), 1) : 1;
+  document.getElementById('insight-technologies').innerHTML = topTech.length
+    ? topTech.map(t => bar(t.technology, t.count, techMax, `${t.count.toLocaleString()} (${pct(t.count, total)})`)).join('')
+    : '<div style="color:var(--gray-3);font-size:13px;padding:.5rem 0">No technology data yet — crawl some domains first.</div>';
 }
 
 // ── Browse ──

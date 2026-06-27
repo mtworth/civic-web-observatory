@@ -111,6 +111,9 @@ class DomainObservation(BaseModel):
     axe_rule_ids: list[str] = Field(default_factory=list)
     axe_wcag_tags: list[str] = Field(default_factory=list)
 
+    # Technology fingerprinting
+    technologies: list[str] = Field(default_factory=list)
+
     # Parked / placeholder detection
     is_probably_parked: bool = False
     parked_reason: Optional[str] = None
