@@ -102,6 +102,12 @@ def get_accessibility_summary(conn: duckdb.DuckDBPyConnection = Depends(get_db))
     return _queries().get_accessibility_summary(conn)
 
 
+@app.get("/api/stats/blocking")
+def get_blocking_breakdown(request: Request):
+    conn = request.app.state.db
+    return _queries().get_block_type_breakdown(conn)
+
+
 @app.get("/api/domains")
 def list_domains(
     conn: duckdb.DuckDBPyConnection = Depends(get_db),

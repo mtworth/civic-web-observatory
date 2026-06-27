@@ -643,6 +643,13 @@ body {
 
     <div class="insight-grid full">
       <div>
+        <div class="insight-panel-title">Blocking &amp; Access</div>
+        <div id="insight-blocking"></div>
+      </div>
+    </div>
+
+    <div class="insight-grid full">
+      <div>
         <div class="insight-panel-title">Static accessibility signals</div>
         <div id="insight-a11y"></div>
       </div>
@@ -731,7 +738,7 @@ function pct(n, total) {
 
 // ── Initial load: fetch everything stats-related once ──
 async function loadStats() {
-  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y] = await Promise.all([
+  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking] = await Promise.all([
     fetchJSON(`${API}/summary`),
     fetchJSON(`${API}/stats/https`),
     fetchJSON(`${API}/stats/hosting`),
@@ -741,8 +748,9 @@ async function loadStats() {
     fetchJSON(`${API}/stats/org-types`),
     fetchJSON(`${API}/stats/tls`),
     fetchJSON(`${API}/stats/accessibility`),
+    fetchJSON(`${API}/stats/blocking`),
   ]);
-  Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y });
+  Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking });
 }
 
 function renderOverview() {
@@ -781,7 +789,7 @@ function bar(label, count, max, valueLabel) {
 }
 
 function renderInsights() {
-  const { summary, https, hosting, files, status, tls, a11y } = cache;
+  const { summary, https, hosting, files, status, tls, a11y, blocking } = cache;
   if (!summary || !status.length) return;
   const total = status.reduce((a, s) => a + s.count, 0);
   const ok = (status.find(s => s.status === 'ok') || {}).count || 0;
@@ -829,6 +837,18 @@ function renderInsights() {
     bar('Avg images missing alt', a11y.avg_images_missing_alt, 10, a11y.avg_images_missing_alt),
     bar('Avg inputs missing labels', a11y.avg_inputs_missing_labels, 10, a11y.avg_inputs_missing_labels),
   ].join('');
+
+  if (blocking && blocking.length) {
+    const blockTotal = blocking.reduce((a, b) => a + b.count, 0);
+    const noneRow = blocking.find(b => b.block_type === 'none') || { count: 0 };
+    const blockedRows = blocking.filter(b => b.block_type !== 'none');
+    const blockedCount = blockedRows.reduce((a, b) => a + b.count, 0);
+    const blockMax = Math.max(...blockedRows.map(b => b.count), 1);
+    document.getElementById('insight-blocking').innerHTML = [
+      ...blockedRows.map(b => bar(b.block_type, b.count, blockMax, `${b.count.toLocaleString()} (${pct(b.count, blockTotal)})`)),
+      bar('No blocking detected', noneRow.count, blockTotal, `${noneRow.count.toLocaleString()} (${pct(noneRow.count, blockTotal)})`),
+    ].join('');
+  }
 }
 
 // ── Browse ──
