@@ -147,6 +147,7 @@ async def _fetch(
         "block_type": "none",
         "body": None,
         "success": False,
+        "response_headers": {},
     }
     try:
         start = time.monotonic()
@@ -164,6 +165,7 @@ async def _fetch(
         result["block_type"] = _detect_block_type(resp)
         result["success"] = resp.status_code < 500
         result["body"] = body if resp.status_code == 200 else None
+        result["response_headers"] = dict(resp.headers)
 
     except httpx.TimeoutException:
         result["error"] = "timeout"
@@ -243,7 +245,8 @@ async def check_homepage(
         "http_available": http_ok,
         "http_redirects_to_https": http_redirects_to_https,
         "homepage_ua_retry_succeeded": ua_retry_succeeded,
-        # transient — used by html_checks, not stored
+        # transient — used by html_checks and detector, not stored
         "_html_body": primary.get("body"),
+        "_response_headers": primary.get("response_headers", {}),
     }
 

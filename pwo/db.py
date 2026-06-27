@@ -114,7 +114,8 @@ CREATE TABLE IF NOT EXISTS observations (
 
     collection_status VARCHAR,
     sector VARCHAR,
-    run_id VARCHAR
+    run_id VARCHAR,
+    technologies VARCHAR[]
 )
 """
 
@@ -129,6 +130,8 @@ ALTER TABLE observations ADD COLUMN IF NOT EXISTS run_id VARCHAR
 UA_RETRY_MIGRATION = """
 ALTER TABLE observations ADD COLUMN IF NOT EXISTS homepage_ua_retry_succeeded BOOLEAN
 """
+
+TECHNOLOGIES_MIGRATION = "ALTER TABLE observations ADD COLUMN IF NOT EXISTS technologies VARCHAR[]"
 
 INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_domain ON observations (domain)",
@@ -246,10 +249,11 @@ def open_db(db_path: str) -> duckdb.DuckDBPyConnection:
     conn = duckdb.connect(db_path)
     conn.execute(SCHEMA)
     conn.execute(RUN_SUMMARY_SCHEMA)
-    # Migrate sector/run_id/ua_retry columns onto existing tables
+    # Migrate new columns onto existing tables (all idempotent via ADD COLUMN IF NOT EXISTS)
     conn.execute(SECTOR_MIGRATION)
     conn.execute(RUN_ID_MIGRATION)
     conn.execute(UA_RETRY_MIGRATION)
+    conn.execute(TECHNOLOGIES_MIGRATION)
     # Indexes (idempotent)
     for idx_sql in INDEXES:
         conn.execute(idx_sql)

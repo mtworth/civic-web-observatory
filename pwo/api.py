@@ -107,6 +107,11 @@ def get_blocking_breakdown(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
     return _queries().get_block_type_breakdown(conn)
 
 
+@app.get("/api/stats/technologies")
+def get_tech_breakdown(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    return _queries().get_tech_breakdown(conn)
+
+
 @app.get("/api/domains")
 def list_domains(
     conn: duckdb.DuckDBPyConnection = Depends(get_db),

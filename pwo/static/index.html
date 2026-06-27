@@ -655,6 +655,13 @@ body {
       </div>
     </div>
 
+    <div class="insight-grid full">
+      <div>
+        <div class="insight-panel-title">Technology stack</div>
+        <div id="insight-technologies"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -738,7 +745,7 @@ function pct(n, total) {
 
 // ── Initial load: fetch everything stats-related once ──
 async function loadStats() {
-  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking] = await Promise.all([
+  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking, technologies] = await Promise.all([
     fetchJSON(`${API}/summary`),
     fetchJSON(`${API}/stats/https`),
     fetchJSON(`${API}/stats/hosting`),
@@ -749,8 +756,9 @@ async function loadStats() {
     fetchJSON(`${API}/stats/tls`),
     fetchJSON(`${API}/stats/accessibility`),
     fetchJSON(`${API}/stats/blocking`),
+    fetchJSON(`${API}/stats/technologies`),
   ]);
-  Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking });
+  Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking, technologies });
 }
 
 function renderOverview() {
@@ -789,7 +797,7 @@ function bar(label, count, max, valueLabel) {
 }
 
 function renderInsights() {
-  const { summary, https, hosting, files, status, tls, a11y, blocking } = cache;
+  const { summary, https, hosting, files, status, tls, a11y, blocking, technologies } = cache;
   if (!summary || !status.length) return;
   const total = status.reduce((a, s) => a + s.count, 0);
   const ok = (status.find(s => s.status === 'ok') || {}).count || 0;
@@ -842,13 +850,18 @@ function renderInsights() {
     const blockTotal = blocking.reduce((a, b) => a + b.count, 0);
     const noneRow = blocking.find(b => b.block_type === 'none') || { count: 0 };
     const blockedRows = blocking.filter(b => b.block_type !== 'none');
-    const blockedCount = blockedRows.reduce((a, b) => a + b.count, 0);
     const blockMax = Math.max(...blockedRows.map(b => b.count), 1);
     document.getElementById('insight-blocking').innerHTML = [
       ...blockedRows.map(b => bar(b.block_type, b.count, blockMax, `${b.count.toLocaleString()} (${pct(b.count, blockTotal)})`)),
       bar('No blocking detected', noneRow.count, blockTotal, `${noneRow.count.toLocaleString()} (${pct(noneRow.count, blockTotal)})`),
     ].join('');
   }
+
+  const topTech = (technologies || []).slice(0, 15);
+  const techMax = topTech.length ? Math.max(...topTech.map(t => t.count), 1) : 1;
+  document.getElementById('insight-technologies').innerHTML = topTech.length
+    ? topTech.map(t => bar(t.technology, t.count, techMax, `${t.count.toLocaleString()} (${pct(t.count, total)})`)).join('')
+    : '<div style="color:var(--gray-3);font-size:13px;padding:.5rem 0">No technology data yet — crawl some domains first.</div>';
 }
 
 // ── Browse ──
