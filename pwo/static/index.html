@@ -83,8 +83,14 @@ body {
   border-top: 1px solid var(--gray-2);
 }
 
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .view { display: none; }
-.view.active { display: block; }
+.view.active { display: block; animation: fadeUp 0.18s ease both; }
+.fade-in { animation: fadeUp 0.18s ease both; }
 
 /* ════════════════════════
    LANDING
@@ -717,6 +723,13 @@ const cache = {};
 const browseState = { search: '', status: '', org_type: '', state: '', limit: 25, offset: 0, total: 0 };
 let searchDebounce = null;
 
+function triggerFade(el) {
+  if (!el) return;
+  el.classList.remove('fade-in');
+  void el.offsetWidth; // force reflow so animation restarts
+  el.classList.add('fade-in');
+}
+
 function switchTab(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.site-nav button').forEach(b => b.classList.remove('active'));
@@ -854,6 +867,10 @@ function renderInsights() {
   document.getElementById('insight-technologies').innerHTML = topTech.length
     ? topTech.map(t => bar(t.technology, t.count, techMax, `${t.count.toLocaleString()} (${pct(t.count, total)})`)).join('')
     : '<div style="color:var(--gray-3);font-size:13px;padding:.5rem 0">No technology data yet — crawl some domains first.</div>';
+
+  // Fade in the KPI row and all insight grids
+  triggerFade(document.getElementById('insights-kpis'));
+  document.querySelectorAll('#view-insights .insight-grid').forEach(p => triggerFade(p));
 }
 
 // ── Browse ──
@@ -934,6 +951,7 @@ async function loadBrowse() {
 
   if (data.items.length === 0) {
     tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No domains match these filters.</td></tr>';
+    triggerFade(tbody);
   } else {
     tbody.innerHTML = data.items.map(d => `
       <tr>
@@ -949,6 +967,7 @@ async function loadBrowse() {
         <td class="td-status ${statusClass(d.collection_status, d.homepage_block_type)}">${d.collection_status}</td>
       </tr>
     `).join('');
+    triggerFade(tbody);
   }
 
   document.getElementById('browse-count').textContent = `${browseState.total.toLocaleString()} domains`;
@@ -979,6 +998,7 @@ async function showDomain(domain) {
       fetchJSON(`${API}/domains/${encodeURIComponent(domain)}/history`),
     ]);
     renderDomainProfile(d, history);
+    triggerFade(document.getElementById('domain-content'));
   } catch (e) {
     console.error(e);
     document.getElementById('domain-content').innerHTML = 'Failed to load this domain.';
