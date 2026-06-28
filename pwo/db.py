@@ -153,6 +153,43 @@ SELECT *
 FROM observations
 QUALIFY ROW_NUMBER() OVER (PARTITION BY domain ORDER BY checked_at DESC) = 1
 """,
+    # v_dashboard: all scalar dashboard metrics in one table scan of v_current.
+    # The /api/stats endpoint reads this view once, then queries the breakdown
+    # lists (status, hosting, blocking, technologies) on the same connection.
+    """
+CREATE OR REPLACE VIEW v_dashboard AS
+SELECT
+    COUNT(*)                                                              AS total,
+    COUNT(*) FILTER (WHERE https_available = true)                        AS https_available,
+    COUNT(*) FILTER (WHERE https_available = false
+                        OR https_available IS NULL)                       AS http_only,
+    COUNT(*) FILTER (WHERE http_redirects_to_https = true)               AS redirects_to_https,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE https_available = true)
+          / NULLIF(COUNT(*), 0), 1)                                      AS https_pct,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE http_redirects_to_https = true)
+          / NULLIF(COUNT(*), 0), 1)                                      AS redirects_pct,
+    COUNT(*) FILTER (WHERE tls_valid = true)                             AS tls_valid,
+    COUNT(*) FILTER (WHERE tls_valid = false)                            AS tls_invalid,
+    COUNT(*) FILTER (WHERE tls_valid IS NULL)                            AS tls_unknown,
+    COUNT(*) FILTER (WHERE tls_valid = true
+                      AND tls_days_until_expiry IS NOT NULL
+                      AND tls_days_until_expiry < 30)                    AS tls_expiring_30d,
+    COUNT(*) FILTER (WHERE robots_txt_available = true)                  AS robots_txt,
+    COUNT(*) FILTER (WHERE sitemap_xml_available = true)                 AS sitemap_xml,
+    COUNT(*) FILTER (WHERE llms_txt_available = true)                    AS llms_txt,
+    COUNT(*) FILTER (WHERE static_a11y_ran = true)                       AS a11y_scanned,
+    ROUND(AVG(a11y_images_missing_alt), 2)                               AS avg_images_missing_alt,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE a11y_has_main_landmark = true)
+          / NULLIF(COUNT(*) FILTER (WHERE static_a11y_ran = true), 0), 1) AS pct_has_main_landmark,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE a11y_has_nav_landmark = true)
+          / NULLIF(COUNT(*) FILTER (WHERE static_a11y_ran = true), 0), 1) AS pct_has_nav_landmark,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE a11y_has_html_lang = true)
+          / NULLIF(COUNT(*) FILTER (WHERE static_a11y_ran = true), 0), 1) AS pct_has_html_lang,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE a11y_has_title = true)
+          / NULLIF(COUNT(*) FILTER (WHERE static_a11y_ran = true), 0), 1) AS pct_has_title,
+    ROUND(AVG(a11y_inputs_missing_labels), 2)                            AS avg_inputs_missing_labels
+FROM v_current
+""",
     """
 CREATE OR REPLACE VIEW v_summary AS
 SELECT

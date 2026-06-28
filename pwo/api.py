@@ -69,13 +69,15 @@ def get_db():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Warm the MotherDuck session so the first real request doesn't pay the
-    # ~1.4s cold-connect penalty.
-    path = _db_path()
-    if path.startswith("md:"):
-        conn = duckdb.connect(path)
-        conn.execute("SELECT 1").fetchone()
-        conn.close()
+    # Warm the connection and ensure all views (including v_dashboard) exist.
+    from .db import VIEWS  # noqa: PLC0415
+    conn = duckdb.connect(_db_path())
+    for view_sql in VIEWS:
+        try:
+            conn.execute(view_sql)
+        except Exception:
+            pass
+    conn.close()
     yield
 
 
@@ -112,6 +114,12 @@ def llms_txt():
 
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/api/stats")
+def get_all_stats(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    """Single endpoint returning everything the dashboard needs in one round-trip."""
+    return _cached("all_stats", lambda: _queries().get_dashboard_stats(conn))
 
 
 @app.get("/api/summary")

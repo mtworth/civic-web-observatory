@@ -26,6 +26,114 @@ def _rows_to_dicts(cursor: duckdb.DuckDBPyConnection, rows: list[tuple]) -> list
 
 
 # ---------------------------------------------------------------------------
+# Dashboard — all stats in one connection, one cache key
+# ---------------------------------------------------------------------------
+
+def get_dashboard_stats(conn: duckdb.DuckDBPyConnection) -> dict:
+    """Return everything the dashboard needs in a single dict.
+
+    Reads v_dashboard once (one table scan) for all scalar metrics, then
+    queries the breakdown lists on the same connection. The caller gets one
+    object to cache instead of eleven.
+    """
+    result: dict = {}
+
+    # Scalar metrics — single scan via v_dashboard view
+    try:
+        cur = conn.execute("SELECT * FROM v_dashboard")
+        row = cur.fetchone()
+        if row:
+            scalars = _row_to_dict(cur, row)
+            total = scalars.get("total", 0)
+            result["total"] = total
+            result["https"] = {k: scalars[k] for k in
+                ("https_available", "http_only", "redirects_to_https",
+                 "https_pct", "redirects_pct")}
+            result["tls"] = {k: scalars[k] for k in
+                ("tls_valid", "tls_invalid", "tls_unknown", "tls_expiring_30d")}
+            result["files"] = {k: scalars[k] for k in
+                ("robots_txt", "sitemap_xml", "llms_txt")}
+            result["files"]["total"] = total
+            result["a11y"] = {k: scalars[k] for k in
+                ("a11y_scanned", "avg_images_missing_alt", "pct_has_main_landmark",
+                 "pct_has_nav_landmark", "pct_has_html_lang", "pct_has_title",
+                 "avg_inputs_missing_labels")}
+    except Exception:
+        pass
+
+    # List breakdowns — each is a separate GROUP BY query on v_current
+    try:
+        cur = conn.execute("""
+            SELECT COALESCE(collection_status, 'unknown') AS status, COUNT(*) AS count
+            FROM v_current GROUP BY 1 ORDER BY 2 DESC
+        """)
+        result["status"] = _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        result["status"] = []
+
+    try:
+        cur = conn.execute("""
+            SELECT COALESCE(nameserver_provider_hint, 'unknown') AS provider, COUNT(*) AS count
+            FROM v_current GROUP BY 1 ORDER BY 2 DESC
+        """)
+        result["hosting"] = _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        result["hosting"] = []
+
+    try:
+        cur = conn.execute("""
+            SELECT COALESCE(homepage_block_type, 'none') AS block_type, COUNT(*) AS count
+            FROM v_current GROUP BY 1 ORDER BY 2 DESC
+        """)
+        result["blocking"] = _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        result["blocking"] = []
+
+    try:
+        cur = conn.execute("""
+            SELECT t AS technology, COUNT(*) AS count
+            FROM v_current, UNNEST(technologies) AS t(t)
+            WHERE technologies IS NOT NULL AND len(technologies) > 0
+            GROUP BY 1 ORDER BY 2 DESC LIMIT 30
+        """)
+        result["technologies"] = _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        result["technologies"] = []
+
+    try:
+        cur = conn.execute("""
+            SELECT tls_issuer AS issuer, COUNT(*) AS count
+            FROM v_current WHERE tls_valid = true
+            GROUP BY 1 ORDER BY 2 DESC LIMIT 10
+        """)
+        if "tls" in result:
+            result["tls"]["top_issuers"] = _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        pass
+
+    try:
+        cur = conn.execute("""
+            SELECT state, COUNT(*) AS count FROM v_current
+            WHERE state IS NOT NULL AND state != ''
+            GROUP BY 1 ORDER BY 1
+        """)
+        result["states"] = _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        result["states"] = []
+
+    try:
+        cur = conn.execute("""
+            SELECT COALESCE(org_type, 'unknown') AS org_type, COUNT(*) AS count
+            FROM v_current GROUP BY 1 ORDER BY 2 DESC
+        """)
+        result["orgTypes"] = _rows_to_dicts(cur, cur.fetchall())
+    except Exception:
+        result["orgTypes"] = []
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Run summary
 # ---------------------------------------------------------------------------
 

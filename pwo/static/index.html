@@ -745,19 +745,11 @@ function pct(n, total) {
 
 // ── Initial load: fetch everything stats-related once ──
 async function loadStats() {
-  const [summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking, technologies] = await Promise.all([
+  const [summary, stats] = await Promise.all([
     fetchJSON(`${API}/summary`),
-    fetchJSON(`${API}/stats/https`),
-    fetchJSON(`${API}/stats/hosting`),
-    fetchJSON(`${API}/stats/files`),
-    fetchJSON(`${API}/stats/status`),
-    fetchJSON(`${API}/stats/states`),
-    fetchJSON(`${API}/stats/org-types`),
-    fetchJSON(`${API}/stats/tls`),
-    fetchJSON(`${API}/stats/accessibility`),
-    fetchJSON(`${API}/stats/blocking`),
-    fetchJSON(`${API}/stats/technologies`),
+    fetchJSON(`${API}/stats`),
   ]);
+  const { https, hosting, files, status, states, orgTypes, tls, a11y, blocking, technologies } = stats;
   Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking, technologies });
 }
 

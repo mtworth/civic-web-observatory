@@ -149,22 +149,21 @@ pwo serve
 |---|---|
 | `GET /` | Frontend SPA |
 | `GET /api/health` | Version check |
-| `GET /api/summary` | Run history |
+| `GET /api/summary` | Most recent run metadata + dataset totals |
+| `GET /api/stats` | **All dashboard stats in one request** — https, tls, files, a11y, status, hosting, blocking, technologies, states, orgTypes |
 | `GET /api/domains` | Paginated domain list (filters: status, sector, org_type, state, search) |
 | `GET /api/domains/{domain}` | Single domain latest snapshot |
 | `GET /api/domains/{domain}/history` | All crawl snapshots for a domain |
-| `GET /api/stats/status` | Collection status breakdown |
-| `GET /api/stats/https` | HTTPS adoption rates |
-| `GET /api/stats/hosting` | Nameserver provider breakdown |
-| `GET /api/stats/tls` | TLS validity stats |
-| `GET /api/stats/files` | robots/sitemap/llms.txt availability |
-| `GET /api/stats/accessibility` | Static a11y signal summary |
-| `GET /api/stats/blocking` | WAF/block type breakdown |
-| `GET /api/stats/technologies` | Top 30 detected technologies |
-| `GET /api/stats/states` | Domain count by state |
-| `GET /api/stats/org-types` | Domain count by org type |
 | `GET /api/blocked` | All currently-blocked domains |
 | `GET /api/runs` | Run summary table |
+| `GET /api/stats/status` | (kept for compatibility) Collection status breakdown |
+| `GET /api/stats/https` | (kept for compatibility) HTTPS adoption |
+| `GET /api/stats/hosting` | (kept for compatibility) Nameserver provider breakdown |
+| `GET /api/stats/tls` | (kept for compatibility) TLS stats |
+| `GET /api/stats/files` | (kept for compatibility) robots/sitemap/llms.txt |
+| `GET /api/stats/accessibility` | (kept for compatibility) Static a11y summary |
+| `GET /api/stats/blocking` | (kept for compatibility) WAF block type breakdown |
+| `GET /api/stats/technologies` | (kept for compatibility) Top 30 technologies |
 
 ---
 
