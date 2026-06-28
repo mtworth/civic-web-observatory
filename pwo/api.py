@@ -15,17 +15,25 @@ def _queries():
     from . import queries  # noqa: PLC0415
     return queries
 
-DB_PATH = os.getenv("PWO_DB_PATH", "outputs/observations.duckdb")
+def _db_path() -> str:
+    """Return MotherDuck connection string if token is set, else local file path."""
+    token = os.getenv("MOTHERDUCK_TOKEN")
+    if token:
+        return f"md:pwo?motherduck_token={token}"
+    return os.getenv("PWO_DB_PATH", "outputs/observations.duckdb")
 
 
 def get_db():
-    """Open a fresh read-only DuckDB connection per request.
+    """Open a fresh DuckDB connection per request.
 
     FastAPI runs sync handlers in a thread pool, so concurrent requests race
-    on any shared connection object. DuckDB supports multiple simultaneous
-    read-only openers, so per-request connections are both safe and cheap.
+    on any shared connection object. Per-request connections are safe because
+    DuckDB supports multiple simultaneous read-only openers (local file) and
+    MotherDuck handles concurrent reads natively.
     """
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    path = _db_path()
+    read_only = not path.startswith("md:")
+    conn = duckdb.connect(path, read_only=read_only)
     try:
         yield conn
     finally:

@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,14 @@ from .dotgov import fetch_dotgov_domains
 from .models import DomainObservation
 
 console = Console(force_terminal=True)
+
+
+def _resolve_db_path(output_dir: str) -> str:
+    """Return MotherDuck connection string if token is set, else local file path."""
+    token = os.getenv("MOTHERDUCK_TOKEN")
+    if token:
+        return f"md:pwo?motherduck_token={token}"
+    return str(Path(output_dir) / "observations.duckdb")
 
 
 def _load_csv_domains(path: str) -> list[dict]:
@@ -57,7 +66,7 @@ def dotgov(limit, concurrency, timeout, skip_axe, output_dir, user_agent, seed):
         timeout=timeout,
         skip_axe=skip_axe,
         output_dir=output_dir,
-        db_path=str(Path(output_dir) / "observations.duckdb"),
+        db_path=_resolve_db_path(output_dir),
     )
     if user_agent:
         config.user_agent = user_agent
@@ -88,7 +97,7 @@ def crawl(csv_path, limit, concurrency, timeout, skip_axe, output_dir, user_agen
         timeout=timeout,
         skip_axe=skip_axe,
         output_dir=output_dir,
-        db_path=str(Path(output_dir) / "observations.duckdb"),
+        db_path=_resolve_db_path(output_dir),
     )
     if user_agent:
         config.user_agent = user_agent

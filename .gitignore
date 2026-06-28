@@ -12,6 +12,7 @@ dist/
 # Secrets
 .env
 .env.*
+!.env.example
 
 # Crawl output / generated data (regenerate via `pwo dotgov` or `pwo crawl`)
 outputs/

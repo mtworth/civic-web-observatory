@@ -244,20 +244,27 @@ CREATE TABLE IF NOT EXISTS run_summary (
 """
 
 
+def _is_motherduck(db_path: str) -> bool:
+    return db_path.startswith("md:")
+
+
 def open_db(db_path: str) -> duckdb.DuckDBPyConnection:
-    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-    conn = duckdb.connect(db_path)
-    conn.execute(SCHEMA)
-    conn.execute(RUN_SUMMARY_SCHEMA)
-    # Migrate new columns onto existing tables (all idempotent via ADD COLUMN IF NOT EXISTS)
-    conn.execute(SECTOR_MIGRATION)
-    conn.execute(RUN_ID_MIGRATION)
-    conn.execute(UA_RETRY_MIGRATION)
-    conn.execute(TECHNOLOGIES_MIGRATION)
-    # Indexes (idempotent)
-    for idx_sql in INDEXES:
-        conn.execute(idx_sql)
-    # Views (idempotent via CREATE OR REPLACE)
+    if _is_motherduck(db_path):
+        conn = duckdb.connect(db_path)
+    else:
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        conn = duckdb.connect(db_path)
+        conn.execute(SCHEMA)
+        conn.execute(RUN_SUMMARY_SCHEMA)
+        # Migrate new columns onto existing tables (all idempotent via ADD COLUMN IF NOT EXISTS)
+        conn.execute(SECTOR_MIGRATION)
+        conn.execute(RUN_ID_MIGRATION)
+        conn.execute(UA_RETRY_MIGRATION)
+        conn.execute(TECHNOLOGIES_MIGRATION)
+        # Indexes (idempotent)
+        for idx_sql in INDEXES:
+            conn.execute(idx_sql)
+    # Views (idempotent via CREATE OR REPLACE) — runs for both local and MotherDuck
     for view_sql in VIEWS:
         conn.execute(view_sql)
     return conn
