@@ -1,0 +1,86 @@
+name: Daily Crawl
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 6am UTC daily
+  workflow_dispatch:
+    inputs:
+      bucket:
+        description: 'Override day bucket (0–29). Defaults to today.'
+        required: false
+        type: string
+      dry_run:
+        description: 'Print domain count only, do not crawl'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Slice today's domains
+        id: slice
+        run: |
+          python3 - <<'EOF'
+          import csv, hashlib, datetime, sys, os
+
+          seed = 'data/seed_domains.csv'
+          out  = '/tmp/daily_slice.csv'
+
+          # Which bucket? CLI override or today's ordinal mod 30
+          override = os.environ.get('BUCKET_OVERRIDE', '').strip()
+          if override:
+              bucket = int(override)
+          else:
+              bucket = datetime.date.today().toordinal() % 30
+
+          print(f"Bucket: {bucket}/30", flush=True)
+
+          with open(seed, newline='') as f:
+              reader = csv.DictReader(f)
+              fieldnames = reader.fieldnames
+              rows = [
+                  r for r in reader
+                  if int(hashlib.sha256(r['domain'].encode()).hexdigest(), 16) % 30 == bucket
+              ]
+
+          print(f"Domains in slice: {len(rows):,}", flush=True)
+
+          with open(out, 'w', newline='') as f:
+              writer = csv.DictWriter(f, fieldnames=fieldnames)
+              writer.writeheader()
+              writer.writerows(rows)
+
+          # Expose count for the next step
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as gh:
+              gh.write(f"count={len(rows)}\n")
+              gh.write(f"bucket={bucket}\n")
+          EOF
+        env:
+          BUCKET_OVERRIDE: ${{ inputs.bucket }}
+
+      - name: Crawl
+        if: ${{ inputs.dry_run != true }}
+        run: uv run pwo crawl /tmp/daily_slice.csv --concurrency 25 --timeout 15
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Crawl summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bucket**: ${{ steps.slice.outputs.bucket }}/30" >> $GITHUB_STEP_SUMMARY
+          echo "- **Domains sliced**: ${{ steps.slice.outputs.count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry run**: ${{ inputs.dry_run || false }}" >> $GITHUB_STEP_SUMMARY

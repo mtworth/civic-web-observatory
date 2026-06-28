@@ -233,6 +233,33 @@ When the initial fetch is blocked, the crawler classifies it and optionally retr
 
 ---
 
+## Scheduled crawls (GitHub Actions)
+
+The workflow at `.github/workflows/crawl.yml` runs daily at 6am UTC and crawls ~10,600 domains — one deterministic 1/30th slice of the seed dataset. Every domain is visited once per 30-day window.
+
+**Sampling strategy:** `SHA-256(domain) % 30 == today.toordinal() % 30` — stable across Python versions, even distribution (10,453–10,833 domains/bucket), no state required.
+
+**Setup:**
+
+1. Add `MOTHERDUCK_TOKEN` as a repository secret (Settings → Secrets → Actions)
+2. Enable Actions on the repo if not already on
+3. The first scheduled run will fire at 6am UTC the next day
+
+**Manual trigger:** Go to Actions → Daily Crawl → Run workflow. You can optionally override the bucket (0–29) to re-crawl a specific day's slice, or enable dry run to just print the domain count.
+
+**Runtime:** ~45–65 minutes/day at concurrency 25. Uses ~1,350–1,950 of GitHub's 2,000 free minutes/month (public repo).
+
+**Refreshing the seed:** `data/seed_domains.csv` should be regenerated every few months as new IRS 990 filings are published:
+
+```bash
+python3 -m pwo.extract_990_domains   # → outputs/nonprofit_domains.csv
+python3 -m pwo.build_seed            # → outputs/seed_domains.csv
+cp outputs/seed_domains.csv data/seed_domains.csv
+git add data/seed_domains.csv && git commit -m "refresh seed dataset"
+```
+
+---
+
 ## Planned / next steps
 
 - GitHub Actions workflow for daily 20% rotation crawl (~63k domains/day)
