@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 from contextlib import asynccontextmanager
@@ -67,17 +68,26 @@ def get_db():
         conn.close()
 
 
+def _warmup():
+    """Blocking warmup — runs in a thread so it doesn't block app startup."""
+    from .db import VIEWS  # noqa: PLC0415
+    try:
+        conn = duckdb.connect(_db_path())
+        for view_sql in VIEWS:
+            try:
+                conn.execute(view_sql)
+            except Exception:
+                pass
+        conn.close()
+    except Exception:
+        pass  # warmup failure is non-fatal; first real request pays the cold-connect cost
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Warm the connection and ensure all views (including v_dashboard) exist.
-    from .db import VIEWS  # noqa: PLC0415
-    conn = duckdb.connect(_db_path())
-    for view_sql in VIEWS:
-        try:
-            conn.execute(view_sql)
-        except Exception:
-            pass
-    conn.close()
+    # Run warmup in a background thread so the app starts accepting requests
+    # (including Railway's healthcheck on /api/health) immediately.
+    asyncio.create_task(asyncio.to_thread(_warmup))
     yield
 
 

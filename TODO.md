@@ -13,6 +13,6 @@
 -add sitemap, llms.txt, and robots.txt 
 -add contact form (request full dataset, report inaccuracy, etc.
 -remove all the em-dashes 
--on robots.txt, probably need deeper analysis on what is allowed and unallowed, specific bots / crawlers allowed and blocked? 
 -insights page is really bad, we need more work? maybe even select from technology to look at %. accessibility part is cut off too. 
 -logo
+-on robots.txt, probably need deeper analysis on what is allowed and unallowed, specific bots / crawlers allowed and blocked? 
