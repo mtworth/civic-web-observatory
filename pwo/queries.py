@@ -49,15 +49,24 @@ def get_dashboard_stats(conn: duckdb.DuckDBPyConnection) -> dict:
             result["https"] = {k: scalars[k] for k in
                 ("https_available", "http_only", "redirects_to_https",
                  "https_pct", "redirects_pct")}
-            result["tls"] = {k: scalars[k] for k in
-                ("tls_valid", "tls_invalid", "tls_unknown", "tls_expiring_30d")}
+            result["tls"] = {
+                "valid": scalars["tls_valid"],
+                "invalid": scalars["tls_invalid"],
+                "unknown": scalars["tls_unknown"],
+                "expiring_30d": scalars["tls_expiring_30d"],
+            }
             result["files"] = {k: scalars[k] for k in
                 ("robots_txt", "sitemap_xml", "llms_txt")}
             result["files"]["total"] = total
-            result["a11y"] = {k: scalars[k] for k in
-                ("a11y_scanned", "avg_images_missing_alt", "pct_has_main_landmark",
-                 "pct_has_nav_landmark", "pct_has_html_lang", "pct_has_title",
-                 "avg_inputs_missing_labels")}
+            result["a11y"] = {
+                "domains_scanned": scalars["a11y_scanned"],
+                "avg_images_missing_alt": scalars["avg_images_missing_alt"],
+                "pct_has_main_landmark": scalars["pct_has_main_landmark"],
+                "pct_has_nav_landmark": scalars["pct_has_nav_landmark"],
+                "pct_has_html_lang": scalars["pct_has_html_lang"],
+                "pct_has_title": scalars["pct_has_title"],
+                "avg_inputs_missing_labels": scalars["avg_inputs_missing_labels"],
+            }
     except Exception:
         pass
 
