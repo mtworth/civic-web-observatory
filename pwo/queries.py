@@ -634,6 +634,30 @@ def get_tech_breakdown(conn: duckdb.DuckDBPyConnection, limit: int = 30) -> list
 # Accessibility summary
 # ---------------------------------------------------------------------------
 
+def get_recent_observations(conn: duckdb.DuckDBPyConnection, n: int = 60) -> list[dict]:
+    """Return a random sample of recent observations for the home page feed."""
+    try:
+        cur = conn.execute(f"""
+            SELECT
+                domain, org_name, org_type, checked_at,
+                collection_status, homepage_block_type,
+                https_available, tls_valid, tls_days_until_expiry,
+                llms_txt_available, dns_resolves,
+                technologies, is_probably_parked
+            FROM v_current
+            USING SAMPLE {n}
+        """)
+        rows = cur.fetchall()
+    except Exception:
+        return []
+
+    results = _rows_to_dicts(cur, rows)
+    for rec in results:
+        if rec.get("checked_at") and hasattr(rec["checked_at"], "isoformat"):
+            rec["checked_at"] = rec["checked_at"].isoformat()
+    return results
+
+
 def get_accessibility_summary(conn: duckdb.DuckDBPyConnection) -> dict:
     """Return aggregate static a11y metrics across all scanned domains."""
     try:

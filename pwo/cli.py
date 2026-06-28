@@ -114,11 +114,12 @@ def crawl(csv_path, limit, concurrency, timeout, skip_axe, output_dir, user_agen
 
 @cli.command()
 @click.option("--host", default="0.0.0.0", show_default=True)
-@click.option("--port", default=8000, show_default=True)
+@click.option("--port", default=None, type=int, help="Port (defaults to $PORT env var, then 8000)")
 @click.option("--reload", is_flag=True, default=False)
 def serve(host, port, reload):
     """Start the FastAPI server."""
     import uvicorn
+    port = port or int(os.getenv("PORT", 8000))
     uvicorn.run("pwo.api:app", host=host, port=port, reload=reload)
 
 

@@ -122,6 +122,20 @@ def get_all_stats(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
     return _cached("all_stats", lambda: _queries().get_dashboard_stats(conn))
 
 
+@app.get("/api/recent")
+def get_recent(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    """Random sample of observations for the home page feed. Short cache so it rotates."""
+    now = time.monotonic()
+    key = "recent"
+    if key in _cache:
+        ts, val = _cache[key]
+        if now - ts < 30:   # 30s — shorter than stats so the feed feels fresh
+            return val
+    val = _queries().get_recent_observations(conn)
+    _cache[key] = (now, val)
+    return val
+
+
 @app.get("/api/summary")
 def get_summary(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
     return _cached("summary", lambda: _queries().get_run_summary(conn))

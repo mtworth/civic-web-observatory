@@ -396,15 +396,79 @@ body {
 }
 
 .bar-row { display: flex; align-items: center; gap: .75rem; padding: .375rem 0; }
-.bar-label { font-size: 12px; color: var(--gray-4); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bar-track { flex: 1; height: 6px; background: var(--gray-1); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; background: var(--black); border-radius: 2px; }
-.bar-value { font-family: var(--mono); font-size: 11px; color: var(--gray-4); width: 60px; flex-shrink: 0; text-align: right; }
+.bar-label { font-size: 12px; color: var(--gray-4); width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 5px; background: var(--gray-1); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--black); border-radius: 2px; transition: width 0.4s ease; }
+.bar-value { font-family: var(--mono); font-size: 11px; color: var(--gray-4); width: 72px; flex-shrink: 0; text-align: right; }
 
-.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--gray-2); border: 1px solid var(--gray-2); margin-bottom: 3rem; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--gray-2); border: 1px solid var(--gray-2); margin-bottom: 2.5rem; }
 .kpi-cell { background: var(--white); padding: 1rem 1.125rem; }
 .kpi-n { font-size: 22px; font-weight: 300; letter-spacing: -.02em; line-height: 1; margin-bottom: .3rem; }
 .kpi-label { font-size: 11px; color: var(--gray-3); }
+
+/* ── KEY FINDINGS ── */
+.findings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--gray-2);
+  border: 1px solid var(--gray-2);
+  margin-bottom: 3rem;
+}
+.finding-cell {
+  background: var(--gray-1);
+  padding: .875rem 1.125rem;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--gray-4);
+}
+.finding-cell strong { color: var(--black); font-weight: 500; }
+
+/* ── LIVE FEED ── */
+.feed-section {
+  border-top: 1px solid var(--gray-2);
+  padding: 2rem 0 3rem;
+  margin-top: 2rem;
+}
+.feed-eyebrow {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.feed-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.feed-list { list-style: none; }
+.feed-item {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  gap: .75rem;
+  padding: .4rem 0;
+  border-bottom: 1px solid var(--gray-1);
+  font-size: 12px;
+  align-items: baseline;
+}
+.feed-item:last-child { border-bottom: none; }
+.feed-domain { font-family: var(--mono); color: var(--black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-signal { color: var(--gray-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-signal.warn { color: var(--warn); }
+.feed-signal.ok   { color: var(--ok); }
+.feed-signal.fail { color: var(--fail); }
+.feed-age { font-family: var(--mono); font-size: 11px; color: var(--gray-3); white-space: nowrap; }
+.feed-item.entering { animation: fadeUp 0.25s ease both; }
 
 /* ════════════════════════
    DOMAIN PROFILE
@@ -550,14 +614,21 @@ body {
           <div class="track-desc">robots.txt, sitemap.xml, and the emerging llms.txt convention.</div>
         </div>
         <div class="track-cell">
-          <div class="track-title">Basic HTML signals</div>
-          <div class="track-desc">Page title, meta description, lang attribute, canonical URL, mobile viewport.</div>
+          <div class="track-title">Technology stack</div>
+          <div class="track-desc">7,600+ Wappalyzer patterns matched against HTML, headers, and script sources — CMS, CDN, analytics, frameworks.</div>
         </div>
         <div class="track-cell">
           <div class="track-title">Static accessibility</div>
           <div class="track-desc">Missing alt text, unlabeled form inputs, and missing landmark regions — raw counts, not a score.</div>
         </div>
       </div>
+    </div>
+
+    <div class="feed-section">
+      <div class="feed-eyebrow"><span class="feed-dot"></span> Recent observations</div>
+      <ul class="feed-list" id="feed-list">
+        <li class="feed-item"><span class="feed-domain">Loading…</span><span class="feed-signal"></span><span class="feed-age"></span></li>
+      </ul>
     </div>
 
   </div>
@@ -620,10 +691,12 @@ body {
 
     <div class="insights-header">
       <h2>Insights</h2>
-      <p>Aggregate signals computed directly from the live dataset below. No opaque scores — every number here is a raw count or percentage of a specific, individually verifiable field.</p>
+      <p>Aggregate signals from the live dataset. Every number is a raw count or percentage of a specific, verifiable field — no opaque scores.</p>
     </div>
 
     <div class="kpi-row" id="insights-kpis"></div>
+
+    <div class="findings-row" id="insights-findings"></div>
 
     <div class="insight-grid">
       <div>
@@ -631,26 +704,33 @@ body {
         <div id="insight-status"></div>
       </div>
       <div>
-        <div class="insight-panel-title">Hosting / nameserver provider</div>
-        <div id="insight-hosting"></div>
-      </div>
-    </div>
-
-    <div class="insight-grid">
-      <div>
         <div class="insight-panel-title">HTTPS &amp; TLS</div>
         <div id="insight-https"></div>
-      </div>
-      <div>
-        <div class="insight-panel-title">Machine-readable files</div>
-        <div id="insight-files"></div>
       </div>
     </div>
 
     <div class="insight-grid full">
       <div>
-        <div class="insight-panel-title">Blocking &amp; Access</div>
+        <div class="insight-panel-title">Blocking &amp; access control</div>
         <div id="insight-blocking"></div>
+      </div>
+    </div>
+
+    <div class="insight-grid full">
+      <div>
+        <div class="insight-panel-title">Technology stack — top 15</div>
+        <div id="insight-technologies"></div>
+      </div>
+    </div>
+
+    <div class="insight-grid">
+      <div>
+        <div class="insight-panel-title">Machine-readable files</div>
+        <div id="insight-files"></div>
+      </div>
+      <div>
+        <div class="insight-panel-title">Hosting / nameserver provider</div>
+        <div id="insight-hosting"></div>
       </div>
     </div>
 
@@ -658,13 +738,6 @@ body {
       <div>
         <div class="insight-panel-title">Static accessibility signals</div>
         <div id="insight-a11y"></div>
-      </div>
-    </div>
-
-    <div class="insight-grid full">
-      <div>
-        <div class="insight-panel-title">Technology stack</div>
-        <div id="insight-technologies"></div>
       </div>
     </div>
 
@@ -766,6 +839,87 @@ async function loadStats() {
   Object.assign(cache, { summary, https, hosting, files, status, states, orgTypes, tls, a11y, blocking, technologies });
 }
 
+// ── Activity feed ──
+let feedItems = [];
+let feedOffset = 0;
+const FEED_VISIBLE = 8;
+let feedTimer = null;
+
+function signalFor(d) {
+  if (d.homepage_block_type && d.homepage_block_type !== 'none') {
+    const bt = d.homepage_block_type.replace(/_/g, ' ');
+    return { text: `blocked · ${bt}`, cls: 'warn' };
+  }
+  if (d.tls_days_until_expiry !== null && d.tls_days_until_expiry < 30)
+    return { text: `TLS expires in ${d.tls_days_until_expiry}d`, cls: 'warn' };
+  if (d.llms_txt_available)
+    return { text: 'serves llms.txt', cls: 'ok' };
+  if (d.technologies && d.technologies.length > 0)
+    return { text: d.technologies.slice(0, 2).join(' · '), cls: '' };
+  if (d.dns_resolves === false)
+    return { text: 'DNS not resolving', cls: 'fail' };
+  if (d.https_available && d.tls_valid)
+    return { text: 'HTTPS · valid TLS', cls: 'ok' };
+  if (d.https_available && !d.tls_valid)
+    return { text: 'HTTPS · invalid TLS', cls: 'warn' };
+  return { text: d.collection_status || 'checked', cls: '' };
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60)    return `${diff}s ago`;
+  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function renderFeedItem(d) {
+  const { text, cls } = signalFor(d);
+  return `<span class="feed-domain">${d.domain}</span><span class="feed-signal ${cls}">${text}</span><span class="feed-age">${timeAgo(d.checked_at)}</span>`;
+}
+
+function advanceFeed() {
+  const list = document.getElementById('feed-list');
+  if (!list || !feedItems.length) return;
+
+  const next = feedItems[feedOffset % feedItems.length];
+  feedOffset++;
+
+  const li = document.createElement('li');
+  li.className = 'feed-item entering';
+  li.innerHTML = renderFeedItem(next);
+  list.prepend(li);
+
+  while (list.children.length > FEED_VISIBLE) {
+    list.removeChild(list.lastChild);
+  }
+}
+
+async function startFeed() {
+  try {
+    feedItems = await fetchJSON(`${API}/recent`);
+    // shuffle so each page load gets a different ordering
+    feedItems.sort(() => Math.random() - 0.5);
+  } catch (e) { return; }
+
+  const list = document.getElementById('feed-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  // Pre-populate FEED_VISIBLE items
+  for (let i = 0; i < Math.min(FEED_VISIBLE, feedItems.length); i++) {
+    const li = document.createElement('li');
+    li.className = 'feed-item';
+    li.innerHTML = renderFeedItem(feedItems[i]);
+    list.appendChild(li);
+  }
+  feedOffset = FEED_VISIBLE;
+
+  if (feedTimer) clearInterval(feedTimer);
+  feedTimer = setInterval(advanceFeed, 2800);
+}
+
 function renderOverview() {
   const { summary, states, orgTypes } = cache;
   if (!summary || !summary.dataset_domains_total) return;
@@ -808,12 +962,24 @@ function renderInsights() {
   const ok = (status.find(s => s.status === 'ok') || {}).count || 0;
   const blocked = sumBlocked(status);
 
+  const topBlocker = (blocking || []).filter(b => b.block_type !== 'none')[0];
+  const topTechName = (technologies || [])[0];
+  const wordpressRow = (technologies || []).find(t => t.technology === 'WordPress');
+  const wpPct = wordpressRow ? pct(wordpressRow.count, total) : null;
+
   document.getElementById('insights-kpis').innerHTML = `
-    <div class="kpi-cell"><div class="kpi-n">${pct(ok, total)}</div><div class="kpi-label">Reachable (ok)</div></div>
+    <div class="kpi-cell"><div class="kpi-n">${pct(ok, total)}</div><div class="kpi-label">Reachable</div></div>
     <div class="kpi-cell"><div class="kpi-n">${pct(blocked, total)}</div><div class="kpi-label">Blocked / challenged</div></div>
     <div class="kpi-cell"><div class="kpi-n">${https.https_pct || 0}%</div><div class="kpi-label">Serve HTTPS</div></div>
-    <div class="kpi-cell"><div class="kpi-n">${pct(files.llms_txt, total)}</div><div class="kpi-label">Serve llms.txt</div></div>
+    <div class="kpi-cell"><div class="kpi-n">${pct(tls.valid, total)}</div><div class="kpi-label">Valid TLS cert</div></div>
   `;
+
+  document.getElementById('insights-findings').innerHTML = [
+    `<strong>${https.https_pct}%</strong> serve HTTPS — but only <strong>${https.redirects_pct}%</strong> redirect plain HTTP traffic to it.`,
+    topBlocker ? `<strong>${pct(topBlocker.count, total)}</strong> of domains blocked our crawler outright, most by <strong>${topBlocker.block_type.replace(/_/g,' ')}</strong>.` : '',
+    topTechName ? `<strong>${topTechName.technology}</strong> is the most common technology, detected on <strong>${pct(topTechName.count, total)}</strong> of domains${wpPct ? ` · WordPress powers ${wpPct}` : ''}.` : '',
+    `Only <strong>${pct(files.llms_txt, total)}</strong> of domains serve <strong>llms.txt</strong>, the emerging AI-indexing convention.`,
+  ].filter(Boolean).map(f => `<div class="finding-cell">${f}</div>`).join('');
 
   const statusMax = Math.max(...status.map(s => s.count), 1);
   document.getElementById('insight-status').innerHTML = status
@@ -1140,6 +1306,8 @@ function wireFilters() {
     console.error('Failed to load data', e);
     document.getElementById('hero-meta').textContent = 'Failed to load dataset — is the API running?';
   }
+  // Start the feed independently — don't block init if it fails
+  startFeed().catch(() => {});
 })();
 </script>
 </body>
