@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 
 import duckdb
+from dotenv import load_dotenv
+
+load_dotenv()
 from fastapi import FastAPI, Query, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

@@ -1016,6 +1016,8 @@ function renderDomainProfile(d, history) {
       <div>
         <div class="field-group-title">Status &amp; identity</div>
         ${fieldRow('Collection status', d.collection_status)}
+        ${fieldRow('Block type', d.homepage_block_type && d.homepage_block_type !== 'none' ? d.homepage_block_type : null)}
+        ${fieldRow('UA retry succeeded', d.homepage_ua_retry_succeeded, true)}
         ${fieldRow('Sector', d.sector)}
         ${fieldRow('Source', d.source)}
         ${fieldRow('Crawler version', d.crawler_version)}
@@ -1060,6 +1062,12 @@ function renderDomainProfile(d, history) {
         ${fieldRow('Inputs missing labels', d.a11y_inputs_missing_labels)}
       </div>
     </div>
+
+    ${d.technologies && d.technologies.length ? `
+    <div class="insight-panel-title">Technologies detected (${d.technologies.length})</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:2rem">
+      ${d.technologies.map(t => `<span style="font-family:var(--mono);font-size:11px;background:var(--gray-1);padding:2px 8px;border-radius:2px">${t}</span>`).join('')}
+    </div>` : ''}
 
     <div class="insight-panel-title">History (${history.length} run${history.length === 1 ? '' : 's'})</div>
     <table class="history-table">
