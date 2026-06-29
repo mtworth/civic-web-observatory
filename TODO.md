@@ -3,6 +3,9 @@
 -remove API and all that shit. If you want full dataset, contact. 
 -buy domain 
 -redo the insights pane, it's just off. perhaps breakit out in thematic section? "Basic HTTP","Accessibility","Machine Navigation",etc. 
+-on the hosting, why so many unknowns? 
+-be clear on where we're getting the fingerprinting, it's enthec/webappanalyzer. Email these guys when we're live. 
 -on robots.txt, probably need deeper analysis on what is allowed and unallowed (not a priority)
 -need to add contact form (not a priority)
 -need to add umami (not a priority)
+-I think we need more rhetorical umph on the home page. Get people to care "expired certs","AI-ready %","Contain Accessible Elemants". Darken the text a bit, hard to read. 
