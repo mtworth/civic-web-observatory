@@ -72,6 +72,11 @@ jobs:
         env:
           BUCKET_OVERRIDE: ${{ inputs.bucket }}
 
+      - name: Download GeoLite2-ASN database
+        run: uv run pwo download-geoip
+        env:
+          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
+
       - name: Crawl
         if: ${{ inputs.dry_run != true }}
         run: uv run pwo crawl /tmp/daily_slice.csv --concurrency 25 --timeout 10

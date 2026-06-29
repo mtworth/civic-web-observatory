@@ -84,6 +84,7 @@ async def crawl_domain(
             )
             data.update(hosting_result)
 
+
         data.pop("stage", None)
         data["collection_status"] = status_mod.determine_status(data)
 

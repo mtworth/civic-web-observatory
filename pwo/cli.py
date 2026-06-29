@@ -123,6 +123,40 @@ def serve(host, port, reload):
     uvicorn.run("pwo.api:app", host=host, port=port, reload=reload)
 
 
+@cli.command("download-geoip")
+@click.option("--license-key", default=None, envvar="MAXMIND_LICENSE_KEY", help="MaxMind license key")
+@click.option("--dest", default="data/GeoLite2-ASN.mmdb", show_default=True, help="Output path")
+def download_geoip(license_key, dest):
+    """Download the MaxMind GeoLite2-ASN database."""
+    import tarfile
+    import tempfile
+    import urllib.request
+
+    if not license_key:
+        console.print("[red]Error:[/red] MAXMIND_LICENSE_KEY not set. Pass --license-key or set the env var.")
+        raise SystemExit(1)
+
+    url = (
+        f"https://download.maxmind.com/app/geoip_download"
+        f"?edition_id=GeoLite2-ASN&license_key={license_key}&suffix=tar.gz"
+    )
+    dest_path = Path(dest)
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+    console.print("Downloading GeoLite2-ASN...")
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
+        urllib.request.urlretrieve(url, tmp.name)
+        with tarfile.open(tmp.name, "r:gz") as tar:
+            for member in tar.getmembers():
+                if member.name.endswith(".mmdb"):
+                    member.name = dest_path.name
+                    tar.extract(member, path=str(dest_path.parent))
+                    break
+
+    size_mb = dest_path.stat().st_size / 1_000_000
+    console.print(f"[green]Saved[/green] {dest_path} ({size_mb:.1f} MB)")
+
+
 def _run(domain_records: list[dict], config: Config):
     Path(config.output_dir).mkdir(parents=True, exist_ok=True)
     conn = open_db(config.db_path)

@@ -8,4 +8,5 @@
 -on robots.txt, probably need deeper analysis on what is allowed and unallowed (not a priority)
 -need to add contact form (not a priority)
 -need to add umami (not a priority)
--I think we need more rhetorical umph on the home page. Get people to care "expired certs","AI-ready %","Contain Accessible Elemants". Darken the text a bit, hard to read. 
+-I think we need more rhetorical umph on the home page. Get people to care "expired certs","AI-ready %","Contain Accessible Elemants". Darken the text a bit, hard to read.
+-do we need the local db anymore?  
