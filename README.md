@@ -1,4 +1,4 @@
-# Public Web Observatory
+# Civic Web Index
 
 A crawler and analysis platform that maps the digital infrastructure of the American public web — .gov agencies, nonprofits, and civic institutions. Each run produces a structured snapshot per domain covering availability, HTTPS/TLS posture, DNS/hosting, machine-readable files, static accessibility signals, and detected technologies.
 

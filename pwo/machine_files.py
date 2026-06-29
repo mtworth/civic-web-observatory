@@ -41,7 +41,7 @@ def _parse_robots(body: bytes, domain: str) -> dict:
         parser.parse(StringIO(text).readlines())
 
         allows_homepage = parser.can_fetch(
-            "PublicWebObservatoryBot", f"https://{domain}/"
+            "CivicWebIndexBot", f"https://{domain}/"
         )
 
         sitemaps = re.findall(r"(?i)^Sitemap:\s*(\S+)", text, re.MULTILINE)

@@ -1,5 +1,5 @@
 """
-Technology fingerprinting module for the Public Web Observatory.
+Technology fingerprinting module for the Civic Web Index.
 
 Implements a subset of the Wappalyzer/enthec detection approach:
 - html: regex match against full HTML body text

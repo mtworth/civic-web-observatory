@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insights — Civic Web Index</title>
+<meta name="description" content="Aggregate web infrastructure signals across {{ total | format_int }} government and nonprofit domains: HTTPS adoption, TLS posture, hosting distribution, technology stack, and accessibility.">
+<link rel="canonical" href="https://civicwebindex.org/insights">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #111; --white: #fff; --gray-1: #f4f4f4; --gray-2: #e0e0e0;
+  --gray-3: #999; --gray-4: #555; --mono: 'JetBrains Mono', monospace;
+}
+body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); }
+.site-header { max-width: 900px; margin: 0 auto; padding: 1.75rem 1.5rem; display: flex; align-items: baseline; justify-content: space-between; }
+.wordmark { font-family: var(--mono); font-size: 13px; text-decoration: none; }
+.header-rule { max-width: 900px; margin: 0 auto; border: none; border-top: 1px solid var(--gray-2); }
+.insights { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+.insights-header { padding: 3rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
+.insights-header h1 { font-size: 18px; font-weight: 400; margin-bottom: .375rem; }
+.insights-header p { font-size: 13px; color: var(--gray-3); }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--gray-2); border: 1px solid var(--gray-2); margin-bottom: 2.5rem; }
+.kpi-cell { background: var(--white); padding: 1rem 1.125rem; }
+.kpi-n { font-size: 22px; font-weight: 300; letter-spacing: -.02em; line-height: 1; margin-bottom: .3rem; }
+.kpi-label { font-size: 11px; color: var(--gray-3); }
+.insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 3rem; }
+.insight-grid.full { grid-template-columns: 1fr; }
+.panel-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-3); margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
+.bar-row { display: flex; align-items: center; gap: .75rem; padding: .375rem 0; }
+.bar-label { font-size: 12px; color: var(--gray-4); width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 5px; background: var(--gray-1); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--black); border-radius: 2px; }
+.bar-value { font-family: var(--mono); font-size: 11px; color: var(--gray-4); width: 80px; flex-shrink: 0; text-align: right; }
+.cta { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-2); font-size: 13px; color: var(--gray-3); }
+.cta a { color: var(--black); }
+.site-footer { max-width: 900px; margin: 2rem auto 0; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--gray-2); }
+.footer-copy { font-size: 12px; color: var(--gray-3); }
+@media (max-width: 640px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .insight-grid { grid-template-columns: 1fr; }
+  .insights { padding: 0 1rem 3rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <a class="wordmark" href="/">Civic Web Index</a>
+  <nav><a href="/" style="font-size:13px;color:var(--gray-3);text-decoration:none">Overview</a></nav>
+</div>
+<hr class="header-rule">
+
+<div class="insights">
+  <div class="insights-header">
+    <h1>Insights</h1>
+    <p>Aggregate signals across {{ total | format_int }} government and nonprofit domains. Every number is a raw count or percentage of a specific, verifiable field. No opaque scores.</p>
+  </div>
+
+  {% macro pct(n, total) %}{{ "%.1f"|format(100 * n / total if total else 0) }}%{% endmacro %}
+  {% macro bar(label, count, max, value_label) %}
+  {% set w = [2, (100 * count // max if max else 0)] | max %}
+  <div class="bar-row">
+    <div class="bar-label">{{ label }}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:{{ w }}%"></div></div>
+    <div class="bar-value">{{ value_label }}</div>
+  </div>
+  {% endmacro %}
+
+  <div class="kpi-row">
+    <div class="kpi-cell"><div class="kpi-n">{{ "%.1f"|format(100 * ok_count / total if total else 0) }}%</div><div class="kpi-label">Reachable</div></div>
+    <div class="kpi-cell"><div class="kpi-n">{{ "%.1f"|format(100 * blocked_count / total if total else 0) }}%</div><div class="kpi-label">Blocked / challenged</div></div>
+    <div class="kpi-cell"><div class="kpi-n">{{ https.https_pct }}%</div><div class="kpi-label">Serve HTTPS</div></div>
+    <div class="kpi-cell"><div class="kpi-n">{{ "%.1f"|format(100 * tls.valid / total if total else 0) }}%</div><div class="kpi-label">Valid TLS cert</div></div>
+  </div>
+
+  <div class="insight-grid">
+    <div>
+      <div class="panel-title">Collection status</div>
+      {% set status_max = status | map(attribute='count') | max %}
+      {% for s in status %}
+      {{ bar(s.status, s.count, status_max, s.count | format_int ~ ' (' ~ "%.1f"|format(100 * s.count / total) ~ '%)') }}
+      {% endfor %}
+    </div>
+    <div>
+      <div class="panel-title">HTTPS &amp; TLS</div>
+      {{ bar('HTTPS available', https.https_available, total, https.https_pct | string ~ '%') }}
+      {{ bar('HTTP to HTTPS redirect', https.redirects_to_https, total, https.redirects_pct | string ~ '%') }}
+      {{ bar('Valid TLS cert', tls.valid, total, "%.1f"|format(100 * tls.valid / total) ~ '%') }}
+      {{ bar('TLS expiring &lt; 30d', tls.expiring_30d, total, tls.expiring_30d | format_int) }}
+    </div>
+  </div>
+
+  <div class="insight-grid full">
+    <div>
+      <div class="panel-title">Blocking &amp; access control</div>
+      {% set blocked_rows = blocking | selectattr('block_type', 'ne', 'none') | list %}
+      {% set none_row = blocking | selectattr('block_type', 'equalto', 'none') | first | default({'count': 0}) %}
+      {% set block_max = (blocked_rows | map(attribute='count') | max) if blocked_rows else 1 %}
+      {% for b in blocked_rows %}
+      {{ bar(b.block_type, b.count, block_max, b.count | format_int ~ ' (' ~ "%.1f"|format(100 * b.count / total) ~ '%)') }}
+      {% endfor %}
+      {{ bar('No blocking detected', none_row.count, block_max, none_row.count | format_int ~ ' (' ~ "%.1f"|format(100 * none_row.count / total) ~ '%)') }}
+    </div>
+  </div>
+
+  <div class="insight-grid full">
+    <div>
+      <div class="panel-title">Technology stack — top 20</div>
+      {% set top_tech = technologies[:20] %}
+      {% set tech_max = (top_tech | map(attribute='count') | max) if top_tech else 1 %}
+      {% for t in top_tech %}
+      {{ bar(t.technology, t.count, tech_max, t.count | format_int ~ ' (' ~ "%.1f"|format(100 * t.count / total) ~ '%)') }}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="insight-grid">
+    <div>
+      <div class="panel-title">Machine-readable files</div>
+      {{ bar('robots.txt', files.robots_txt, total, "%.1f"|format(100 * files.robots_txt / total) ~ '%') }}
+      {{ bar('sitemap.xml', files.sitemap_xml, total, "%.1f"|format(100 * files.sitemap_xml / total) ~ '%') }}
+      {{ bar('llms.txt', files.llms_txt, total, "%.1f"|format(100 * files.llms_txt / total) ~ '%') }}
+    </div>
+    <div>
+      <div class="panel-title">Hosting / nameserver provider</div>
+      {% set top_hosting = hosting[:8] %}
+      {% set hosting_max = (top_hosting | map(attribute='count') | max) if top_hosting else 1 %}
+      {% for h in top_hosting %}
+      {{ bar(h.provider, h.count, hosting_max, h.count | format_int ~ ' (' ~ "%.1f"|format(100 * h.count / total) ~ '%)') }}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="insight-grid full">
+    <div>
+      <div class="panel-title">Static accessibility signals</div>
+      {% set scanned = a11y.domains_scanned %}
+      {{ bar('Has page title', (a11y.pct_has_title * scanned / 100) | int, scanned, a11y.pct_has_title | string ~ '%') }}
+      {{ bar('Has html lang', (a11y.pct_has_html_lang * scanned / 100) | int, scanned, a11y.pct_has_html_lang | string ~ '%') }}
+      {{ bar('Has main landmark', (a11y.pct_has_main_landmark * scanned / 100) | int, scanned, a11y.pct_has_main_landmark | string ~ '%') }}
+      {{ bar('Has nav landmark', (a11y.pct_has_nav_landmark * scanned / 100) | int, scanned, a11y.pct_has_nav_landmark | string ~ '%') }}
+      <div style="margin-top:1rem;font-size:12px;color:var(--gray-4)">
+        Avg {{ a11y.avg_images_missing_alt }} images missing alt per domain &middot;
+        Avg {{ a11y.avg_inputs_missing_labels }} inputs missing labels per domain &middot;
+        {{ scanned | format_int }} domains scanned
+      </div>
+    </div>
+  </div>
+
+  <div class="cta">
+    Interactive filters, domain search, and full history available at <a href="/">civicwebindex.org</a>.
+    Dataset updated daily via automated crawl.
+  </div>
+</div>
+
+<footer class="site-footer">
+  <span class="footer-copy">civicwebindex.org</span>
+</footer>
+
+</body>
+</html>

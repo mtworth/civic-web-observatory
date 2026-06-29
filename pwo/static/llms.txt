@@ -1,6 +1,6 @@
-# Public Web Observatory
+# Civic Web Index
 
-> Public Web Observatory performs lightweight, transparent, homepage-only checks of public-interest websites (government and nonprofit domains). It records availability, machine-readability, hosting/DNS hints, and automated accessibility signals. It does not bypass bot protections, crawl private areas, or perform vulnerability scanning.
+> Civic Web Index performs lightweight, transparent, homepage-only checks of public-interest websites (government and nonprofit domains). It records availability, machine-readability, hosting/DNS hints, and automated accessibility signals. It does not bypass bot protections, crawl private areas, or perform vulnerability scanning.
 
 This site exposes its own dataset through a JSON API.
 

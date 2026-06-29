@@ -15,6 +15,7 @@ dependencies = [
     "click",
     "rich",
     "fastapi",
+    "jinja2",
     "uvicorn[standard]",
     "pytz",
 ]

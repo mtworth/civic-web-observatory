@@ -2,6 +2,7 @@ import asyncio
 import os
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -9,12 +10,16 @@ import duckdb
 from dotenv import load_dotenv
 
 load_dotenv()
-from fastapi import FastAPI, Query, HTTPException, Depends
+from fastapi import FastAPI, Query, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.templating import Jinja2Templates
 
 STATIC_DIR = Path(__file__).parent / "static"
+TEMPLATES_DIR = Path(__file__).parent / "templates"
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.filters["format_int"] = lambda v: f"{int(v):,}" if v is not None else "0"
 
 # Simple TTL cache for aggregate stats endpoints. Stats only change when a
 # crawl finishes, so 60s staleness is fine and avoids repeated MotherDuck
@@ -91,7 +96,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Public Web Observatory", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Civic Web Index", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -114,12 +119,82 @@ def root():
     return {"status": "ok", "version": "0.1.0"}
 
 
+@app.get("/domains/{domain}", response_class=HTMLResponse)
+def domain_page(request: Request, domain: str, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    result = _queries().get_domain(conn, domain)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Domain '{domain}' not found")
+    checked_at = result.get("checked_at") or ""
+    if checked_at:
+        try:
+            dt = datetime.fromisoformat(checked_at)
+            checked_at = dt.strftime("%-d %B %Y")
+        except Exception:
+            pass
+    return templates.TemplateResponse(request=request, name="domain.html", context={"d": result, "checked_at": checked_at})
+
+
+@app.get("/insights", response_class=HTMLResponse)
+def insights_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    stats = _cached("all_stats", lambda: _queries().get_dashboard_stats(conn))
+    total = stats.get("total", 0)
+    status = stats.get("status", [])
+    blocked_statuses = {"captcha", "bot_challenge", "blocked_by_cdn", "http_403", "http_429"}
+    ok_count = sum(s["count"] for s in status if s["status"] == "ok")
+    blocked_count = sum(s["count"] for s in status if s["status"] in blocked_statuses)
+    return templates.TemplateResponse(request=request, name="insights.html", context={
+        "total": total,
+        "ok_count": ok_count,
+        "blocked_count": blocked_count,
+        "https": stats.get("https", {}),
+        "tls": stats.get("tls", {}),
+        "files": stats.get("files", {}),
+        "a11y": stats.get("a11y", {}),
+        "status": status,
+        "hosting": stats.get("hosting", []),
+        "blocking": stats.get("blocking", []),
+        "technologies": stats.get("technologies", []),
+    })
+
+
 @app.get("/llms.txt")
 def llms_txt():
     path = STATIC_DIR / "llms.txt"
     if path.exists():
         return FileResponse(path, media_type="text/plain")
     raise HTTPException(status_code=404)
+
+
+@app.get("/robots.txt")
+def robots_txt():
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "\n"
+        "User-agent: CivicWebIndexBot\n"
+        "Allow: /\n"
+        "\n"
+        "Sitemap: https://civicwebindex.org/sitemap.xml\n"
+    )
+    return Response(content=content, media_type="text/plain")
+
+
+@app.get("/sitemap.xml")
+def sitemap(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    base = "https://civicwebindex.org"
+    rows = conn.execute("SELECT domain FROM v_current ORDER BY domain").fetchall()
+    urls = [
+        f"  <url><loc>{base}/</loc><changefreq>daily</changefreq></url>",
+        f"  <url><loc>{base}/insights</loc><changefreq>daily</changefreq></url>",
+    ] + [
+        f"  <url><loc>{base}/domains/{row[0]}</loc><changefreq>monthly</changefreq></url>"
+        for row in rows
+    ]
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    xml += "\n".join(urls) + "\n"
+    xml += "</urlset>"
+    return Response(content=xml, media_type="application/xml")
 
 
 if STATIC_DIR.exists():

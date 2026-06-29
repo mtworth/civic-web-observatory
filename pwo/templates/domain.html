@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ d.domain }} — Civic Web Index</title>
+<meta name="description" content="Web infrastructure signals for {{ d.domain }}{% if d.org_name %} ({{ d.org_name }}){% endif %}: HTTPS status, TLS certificate, hosting, technology stack, and accessibility as of {{ checked_at }}.">
+<link rel="canonical" href="https://civicwebindex.org/domains/{{ d.domain }}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #111; --white: #fff; --gray-1: #f4f4f4; --gray-2: #e0e0e0;
+  --gray-3: #999; --gray-4: #555; --fail: #c0392b; --warn: #b9770e; --ok: #2a9d2a;
+  --mono: 'JetBrains Mono', monospace;
+}
+body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); }
+a { color: inherit; }
+.site-header { max-width: 900px; margin: 0 auto; padding: 1.75rem 1.5rem; display: flex; align-items: baseline; justify-content: space-between; }
+.wordmark { font-family: var(--mono); font-size: 13px; text-decoration: none; }
+.header-rule { max-width: 900px; margin: 0 auto; border: none; border-top: 1px solid var(--gray-2); }
+.domain-profile { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+.domain-back { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--gray-3); background: none; border: none; cursor: pointer; padding: 1.5rem 0; display: block; text-decoration: none; }
+.domain-back:hover { color: var(--black); }
+.domain-header { padding: 1rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
+.domain-name { font-family: var(--mono); font-size: 20px; font-weight: 500; margin-bottom: .4rem; }
+.domain-sub { font-size: 13px; color: var(--gray-3); }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
+.field-group-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-3); margin-bottom: .875rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
+.field-row { display: flex; justify-content: space-between; align-items: baseline; padding: .3rem 0; border-bottom: 1px solid var(--gray-1); gap: 1rem; }
+.field-key { font-size: 12px; color: var(--gray-3); flex-shrink: 0; }
+.field-val { font-family: var(--mono); font-size: 12px; text-align: right; word-break: break-all; }
+.field-val.ok { color: var(--ok); } .field-val.fail { color: var(--fail); }
+.insight-panel-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-3); margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
+.tech-list { display: flex; flex-wrap: wrap; gap: .4rem; }
+.tech-tag { font-family: var(--mono); font-size: 11px; background: var(--gray-1); padding: .2rem .5rem; border-radius: 2px; }
+.cta { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-2); font-size: 13px; color: var(--gray-3); }
+.cta a { color: var(--black); }
+.site-footer { max-width: 900px; margin: 2rem auto 0; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--gray-2); }
+.footer-copy { font-size: 12px; color: var(--gray-3); }
+@media (max-width: 640px) {
+  .field-grid { grid-template-columns: 1fr; }
+  .site-header { padding: 1.25rem 1rem; }
+  .domain-profile { padding: 0 1rem 3rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <a class="wordmark" href="/">Civic Web Index</a>
+  <nav><a href="/" style="font-size:13px;color:var(--gray-3);text-decoration:none">← All domains</a></nav>
+</div>
+<hr class="header-rule">
+
+<div class="domain-profile">
+  <a class="domain-back" href="/">← Back to browse</a>
+
+  <div class="domain-header">
+    <div class="domain-name">{{ d.domain }}</div>
+    <div class="domain-sub">
+      {{ d.org_name or 'No organization name on file' }} &middot;
+      {{ d.org_type or 'unknown type' }} &middot;
+      {{ d.state or 'unknown state' }} &middot;
+      last checked {{ checked_at }}
+    </div>
+  </div>
+
+  <div class="field-grid">
+    <div>
+      <div class="field-group-title">Status &amp; identity</div>
+      {% macro row(key, val, boolish=false) %}
+      <div class="field-row">
+        <span class="field-key">{{ key }}</span>
+        <span class="field-val {% if boolish %}{% if val %}ok{% else %}fail{% endif %}{% endif %}">
+          {% if boolish %}{{ 'yes' if val else 'no' }}{% else %}{{ val if val is not none else '—' }}{% endif %}
+        </span>
+      </div>
+      {% endmacro %}
+      {{ row('Status', d.collection_status) }}
+      {{ row('Block type', d.homepage_block_type if d.homepage_block_type and d.homepage_block_type != 'none' else None) }}
+      {{ row('Sector', d.sector) }}
+      {{ row('Source', d.source) }}
+    </div>
+    <div>
+      <div class="field-group-title">DNS &amp; hosting</div>
+      {{ row('Primary IP', d.primary_ip) }}
+      {{ row('ASN', d.host_asn) }}
+      {{ row('ASN org', d.host_asn_org) }}
+      {{ row('Nameserver hint', d.nameserver_provider_hint) }}
+      {{ row('CNAME hint', d.cname_provider_hint) }}
+    </div>
+    <div>
+      <div class="field-group-title">HTTPS / TLS</div>
+      {{ row('HTTPS available', d.https_available, true) }}
+      {{ row('Redirects to HTTPS', d.http_redirects_to_https, true) }}
+      {{ row('TLS valid', d.tls_valid, true) }}
+      {{ row('TLS issuer', d.tls_issuer) }}
+      {{ row('TLS days until expiry', d.tls_days_until_expiry) }}
+    </div>
+    <div>
+      <div class="field-group-title">Machine-readable files</div>
+      {{ row('robots.txt', d.robots_txt_available, true) }}
+      {{ row('sitemap.xml', d.sitemap_xml_available, true) }}
+      {{ row('llms.txt', d.llms_txt_available, true) }}
+    </div>
+    <div>
+      <div class="field-group-title">Response</div>
+      {{ row('Status code', d.homepage_status_code) }}
+      {{ row('Response time', (d.homepage_response_time_ms | string + 'ms') if d.homepage_response_time_ms is not none else None) }}
+      {{ row('HTTP available', d.http_available, true) }}
+    </div>
+    {% if d.technologies %}
+    <div>
+      <div class="field-group-title">Technologies detected ({{ d.technologies | length }})</div>
+      <div class="tech-list">
+        {% for t in d.technologies %}<span class="tech-tag">{{ t }}</span>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="cta">
+    View full interactive profile and history at <a href="/">civicwebindex.org</a>.
+    Data updated via automated crawl; last observation {{ checked_at }}.
+  </div>
+</div>
+
+<footer class="site-footer">
+  <span class="footer-copy">civicwebindex.org</span>
+</footer>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 """
-Query layer for the Public Web Observatory DuckDB database.
+Query layer for the Civic Web Index DuckDB database.
 
 All functions accept a duckdb.DuckDBPyConnection and return plain
 JSON-serializable Python dicts/lists — no Pydantic, no DuckDB objects.

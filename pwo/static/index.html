@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>publicwebobservatory.org</title>
+<title>Civic Web Index</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -178,28 +178,6 @@ body {
 
 .scale-label { font-size: 12px; color: var(--gray-3); }
 
-.tracks-section { margin-bottom: 3.5rem; }
-
-.tracks-eyebrow {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--gray-3);
-  margin-bottom: 1.25rem;
-}
-
-.tracks-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1px;
-  background: var(--gray-2);
-  border: 1px solid var(--gray-2);
-}
-
-.track-cell { background: var(--white); padding: 1rem 1.125rem; }
-.track-title { font-size: 13px; font-weight: 500; color: var(--black); margin-bottom: .25rem; }
-.track-desc { font-size: 12px; color: var(--gray-3); line-height: 1.5; }
 
 /* ════════════════════════
    BROWSE
@@ -281,7 +259,9 @@ body {
 .td-org { font-size: 11px; color: var(--gray-3); margin-top: 2px; font-weight: 300; }
 .td-mono { font-family: var(--mono); font-size: 11px; color: var(--gray-4); }
 
-.td-files { font-family: var(--mono); font-size: 11px; letter-spacing: .05em; }
+.td-files { font-family: var(--mono); font-size: 11px; white-space: nowrap; }
+.td-files span { display: inline-block; }
+.td-files span + span { margin-left: .4rem; }
 .td-files span.on { color: var(--black); font-weight: 500; }
 .td-files span.off { color: var(--gray-2); }
 
@@ -395,6 +375,15 @@ body {
   border-bottom: 1px solid var(--gray-2);
 }
 
+.insight-panel-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
+.insight-panel-title-row .insight-panel-title { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.tech-filter { font-family: var(--mono); font-size: 12px; border: 1px solid var(--gray-2); border-radius: 3px; padding: .25rem .5rem; color: var(--black); outline: none; width: 200px; }
+.tech-filter:focus { border-color: var(--gray-3); }
+.tech-footer { font-size: 12px; color: var(--gray-3); margin-top: .75rem; font-family: var(--mono); }
+.a11y-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2rem; margin-top: .5rem; }
+.a11y-stat { display: flex; flex-direction: column; gap: .2rem; }
+.a11y-n { font-size: 20px; font-weight: 300; letter-spacing: -.02em; }
+.a11y-label { font-size: 12px; color: var(--gray-3); }
 .bar-row { display: flex; align-items: center; gap: .75rem; padding: .375rem 0; }
 .bar-label { font-size: 12px; color: var(--gray-4); width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-track { flex: 1; height: 5px; background: var(--gray-1); border-radius: 2px; overflow: hidden; }
@@ -452,6 +441,8 @@ body {
   50% { opacity: 0.3; }
 }
 .feed-list { list-style: none; }
+.feed-item { cursor: pointer; }
+.feed-item:hover .feed-domain { text-decoration: underline; }
 .feed-item {
   display: grid;
   grid-template-columns: 180px 1fr auto;
@@ -523,6 +514,9 @@ body {
 .methods-body h3 { font-size: 13px; font-weight: 500; margin: 1.75rem 0 .5rem; }
 .methods-body p, .methods-body li { font-size: 13px; color: var(--gray-4); line-height: 1.65; }
 .methods-body ul { padding-left: 1.25rem; margin-bottom: .5rem; }
+.glossary { margin: .75rem 0 1.5rem; }
+.glossary dt { font-size: 13px; font-weight: 500; color: var(--black); margin-top: .875rem; font-family: var(--mono); }
+.glossary dd { font-size: 13px; color: var(--gray-4); line-height: 1.65; margin: .2rem 0 0 0; }
 .methods-body code {
   font-family: var(--mono);
   font-size: 12px;
@@ -548,13 +542,55 @@ body {
 .footer-links { display: flex; gap: 1.25rem; list-style: none; }
 .footer-links a { font-size: 12px; color: var(--gray-3); text-decoration: none; }
 .footer-links a:hover { color: var(--black); }
+
+/* ════════════════════════
+   MOBILE
+════════════════════════ */
+@media (max-width: 640px) {
+  .site-header { padding: 1.25rem 1rem; flex-wrap: wrap; gap: .75rem; }
+  .site-nav { gap: 1.1rem; flex-wrap: wrap; }
+  .site-nav button { font-size: 12px; }
+
+  .landing { padding: 0 1rem; }
+  .landing-hero { padding: 2rem 0 1.75rem; }
+  .landing-hero h1 { font-size: 20px; }
+  .hero-actions { flex-wrap: wrap; gap: .75rem; }
+
+  .scale-row { grid-template-columns: 1fr 1fr; }
+  .scale-stat:nth-child(3) { grid-column: span 2; border-right: none; border-top: 1px solid var(--gray-2); padding-top: 1.25rem; margin-right: 0; padding-right: 0; }
+  .scale-stat:not(:last-child) { padding-right: 0; margin-right: 0; }
+
+  .browse { padding: 0 1rem; }
+  .filter-input { width: 100%; }
+  .filter-select { font-size: 12px; }
+  .filter-count { margin-left: 0; }
+
+  .browse-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 560px; }
+
+  .browse-nav { flex-direction: column; gap: 2rem; }
+
+  .insights { padding: 0 1rem 3rem; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .insight-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .findings-row { grid-template-columns: 1fr; }
+  .tech-filter { width: 100%; }
+  .insight-panel-title-row { flex-direction: column; align-items: flex-start; gap: .5rem; }
+
+  .domain-profile { padding: 0 1rem 3rem; }
+  .field-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+
+  .methods-body { padding: 0 1rem 3rem; }
+
+  .site-footer { flex-direction: column; gap: .5rem; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
 
 <!-- ── HEADER ── -->
 <div class="site-header">
-  <a class="wordmark" onclick="switchTab('home')">publicwebobservatory.org</a>
+  <a class="wordmark" onclick="switchTab('home')">Civic Web Index</a>
   <ul class="site-nav">
     <li><button id="nav-home" class="active" onclick="switchTab('home')">Overview</button></li>
     <li><button id="nav-browse" onclick="switchTab('browse')">Browse</button></li>
@@ -569,7 +605,7 @@ body {
   <div class="landing">
 
     <div class="landing-hero">
-      <h1>Mapping the <strong>digital infrastructure</strong> of the American public web</h1>
+      <h1>Mapping the <strong>digital infrastructure</strong> of the American civic web</h1>
       <p class="landing-meta" id="hero-meta">
         Loading dataset…
       </p>
@@ -591,36 +627,6 @@ body {
       <div class="scale-stat">
         <div class="scale-n" id="stat-types">—</div>
         <div class="scale-label">Entity types mapped</div>
-      </div>
-    </div>
-
-    <div class="tracks-section">
-      <div class="tracks-eyebrow">What we track</div>
-      <div class="tracks-grid">
-        <div class="track-cell">
-          <div class="track-title">Availability &amp; blocking</div>
-          <div class="track-desc">Homepage status codes, CAPTCHA gates, bot challenges, and CDN blocks encountered during a transparent crawl.</div>
-        </div>
-        <div class="track-cell">
-          <div class="track-title">HTTPS &amp; TLS</div>
-          <div class="track-desc">Certificate validity, issuer, expiry window, and whether plain HTTP is redirected to HTTPS.</div>
-        </div>
-        <div class="track-cell">
-          <div class="track-title">DNS &amp; hosting</div>
-          <div class="track-desc">Nameservers, ASN ownership, and pattern-matched hosting/CDN provider hints.</div>
-        </div>
-        <div class="track-cell">
-          <div class="track-title">Machine-readable files</div>
-          <div class="track-desc">robots.txt, sitemap.xml, and the emerging llms.txt convention.</div>
-        </div>
-        <div class="track-cell">
-          <div class="track-title">Technology stack</div>
-          <div class="track-desc">7,600+ Wappalyzer patterns matched against HTML, headers, and script sources — CMS, CDN, analytics, frameworks.</div>
-        </div>
-        <div class="track-cell">
-          <div class="track-title">Static accessibility</div>
-          <div class="track-desc">Missing alt text, unlabeled form inputs, and missing landmark regions — raw counts, not a score.</div>
-        </div>
       </div>
     </div>
 
@@ -646,6 +652,7 @@ body {
       <span class="filter-count" id="browse-count">loading…</span>
     </div>
 
+    <div class="browse-table-wrap">
     <table class="data-table">
       <thead>
         <tr>
@@ -662,6 +669,7 @@ body {
         <tr class="empty-row"><td colspan="7">Loading…</td></tr>
       </tbody>
     </table>
+    </div>
 
     <div class="table-foot">
       <span class="page-count" id="page-count"></span>
@@ -691,7 +699,7 @@ body {
 
     <div class="insights-header">
       <h2>Insights</h2>
-      <p>Aggregate signals from the live dataset. Every number is a raw count or percentage of a specific, verifiable field — no opaque scores.</p>
+      <p>Aggregate signals from the live dataset. Every number is a raw count or percentage of a specific, verifiable field. No opaque scores.</p>
     </div>
 
     <div class="kpi-row" id="insights-kpis"></div>
@@ -718,8 +726,12 @@ body {
 
     <div class="insight-grid full">
       <div>
-        <div class="insight-panel-title">Technology stack — top 15</div>
+        <div class="insight-panel-title-row">
+          <span class="insight-panel-title">Technology stack</span>
+          <input class="tech-filter" id="tech-filter" type="text" placeholder="Filter technologies…" oninput="filterTech(this.value)">
+        </div>
         <div id="insight-technologies"></div>
+        <div class="tech-footer" id="tech-footer"></div>
       </div>
     </div>
 
@@ -756,33 +768,107 @@ body {
 <div id="view-methods" class="view">
   <div class="methods-body">
     <h2>Methodology</h2>
-    <p>Public Web Observatory performs lightweight, transparent, homepage-only checks of public-interest websites. It records availability, machine-readability, hosting/DNS hints, and automated accessibility signals. It does not bypass bot protections, crawl private areas, or perform vulnerability scanning.</p>
+    <p>Civic Web Index performs lightweight, transparent, homepage-only checks of public-interest websites. It records availability, machine-readability, hosting/DNS hints, and automated accessibility signals. It does not bypass bot protections, crawl private areas, or perform vulnerability scanning.</p>
 
     <h3>What gets crawled</h3>
     <p>For each domain, the crawler requests only: the homepage over HTTPS and HTTP, <code>/robots.txt</code>, <code>/sitemap.xml</code>, and <code>/llms.txt</code>. No deeper links are followed.</p>
 
     <h3>Crawler identity</h3>
     <p>Every request identifies itself with a transparent User-Agent:</p>
-    <p><code>PublicWebObservatoryBot/0.1 (+https://publicwebobservatory.org/bot; contact: hello@publicwebobservatory.org)</code></p>
+    <p><code>CivicWebIndexBot/0.1 (+https://civicwebindex.org/bot; contact: hello@civicwebindex.org)</code></p>
 
     <h3>What it does not do</h3>
     <ul>
       <li>No proxy rotation or fake browser fingerprinting</li>
       <li>No CAPTCHA solving or bot-challenge evasion</li>
       <li>No login attempts or admin path probing</li>
-      <li>No aggressive retries — blocks are recorded, not bypassed</li>
+      <li>No aggressive retries; blocks are recorded, not bypassed</li>
     </ul>
 
     <h3>Scoring</h3>
-    <p>Raw observations only. This dataset deliberately avoids collapsing signals into a single opaque score — every field shown (HTTPS validity, TLS issuer, missing alt text, etc.) is a direct, individually verifiable fact about the domain at the time it was checked.</p>
+    <p>Raw observations only. This dataset deliberately avoids collapsing signals into a single opaque score. Every field shown (HTTPS validity, TLS issuer, missing alt text, etc.) is a direct, individually verifiable fact about the domain at the time it was checked.</p>
 
-    <h3>Current data source</h3>
-    <p>This dataset currently covers a random sample of domains from the CISA <code>.gov</code> registry (<a href="https://github.com/cisagov/dotgov-data" style="color:var(--gray-4)">cisagov/dotgov-data</a>). Coverage will expand to other public-interest domain lists over time.</p>
+    <h3>Data sources</h3>
+    <p>This dataset covers government domains from the CISA <code>.gov</code> registry (<a href="https://github.com/cisagov/dotgov-data" style="color:var(--gray-4)">cisagov/dotgov-data</a>) and nonprofit domains from IRS 990 filings. Coverage expands over time.</p>
+
+    <h2 style="margin-top:3rem">Metric glossary</h2>
+    <p>Every signal is a direct observation from a single homepage request. No inference, no scoring.</p>
+
+    <h3>Availability &amp; status</h3>
+    <dl class="glossary">
+      <dt>Collection status</dt>
+      <dd><strong>ok</strong> — homepage returned a 2xx or 3xx response. <strong>dns_failed</strong> — domain did not resolve. <strong>http_error</strong> — server responded with a 4xx/5xx. <strong>captcha / bot_challenge / blocked_by_cdn / http_403 / http_429</strong> — bot-protection response detected and recorded without bypass.</dd>
+      <dt>Block type</dt>
+      <dd>Classifies the specific blocking mechanism when status is not <em>ok</em>: CAPTCHA page, Cloudflare/CDN challenge, explicit 403 Forbidden, or 429 Too Many Requests.</dd>
+      <dt>Homepage status code</dt>
+      <dd>The final HTTP status code after following redirects.</dd>
+      <dt>Response time</dt>
+      <dd>Time in milliseconds from opening the TCP connection to receiving the complete response body, measured over a single request with a 10-second timeout.</dd>
+    </dl>
+
+    <h3>HTTPS &amp; TLS</h3>
+    <dl class="glossary">
+      <dt>HTTPS available</dt>
+      <dd>Whether the domain served a valid response over <code>https://</code>. Does not require a valid certificate.</dd>
+      <dt>HTTP redirects to HTTPS</dt>
+      <dd>Whether a plain <code>http://</code> request is redirected to <code>https://</code> before content is served.</dd>
+      <dt>TLS valid</dt>
+      <dd>Whether the TLS certificate chain is trusted, the hostname matches, and the certificate has not expired, as verified by Python's <code>ssl</code> module.</dd>
+      <dt>TLS issuer</dt>
+      <dd>The organization name from the certificate's issuer field (e.g. Let's Encrypt, DigiCert, Sectigo).</dd>
+      <dt>TLS days until expiry</dt>
+      <dd>Calendar days between the observation date and the certificate's <code>notAfter</code> field. Values under 30 are flagged as expiring soon.</dd>
+    </dl>
+
+    <h3>DNS &amp; hosting</h3>
+    <dl class="glossary">
+      <dt>Primary IP</dt>
+      <dd>First A record returned by DNS resolution of the bare domain.</dd>
+      <dt>ASN / ASN org</dt>
+      <dd>Autonomous System Number and registered organization for the primary IP, looked up via the RIPE/ARIN database. Indicates the network owner (e.g. Amazon, Cloudflare, a university).</dd>
+      <dt>Nameserver hint</dt>
+      <dd>Hosting or DNS provider inferred from NS record patterns (e.g. <code>*.awsdns.com</code> → AWS, <code>*.cloudflare.com</code> → Cloudflare). "unknown" if no pattern matches.</dd>
+      <dt>CNAME hint</dt>
+      <dd>CDN or platform inferred from CNAME records (e.g. <code>*.azurewebsites.net</code> → Azure).</dd>
+    </dl>
+
+    <h3>Machine-readable files</h3>
+    <dl class="glossary">
+      <dt>robots.txt</dt>
+      <dd>Whether <code>/robots.txt</code> returned a 200 response with non-empty body. The crawler parses allow/disallow rules and records whether the homepage is permitted.</dd>
+      <dt>sitemap.xml</dt>
+      <dd>Whether <code>/sitemap.xml</code> returned a 200 response. Content is not parsed beyond detection.</dd>
+      <dt>llms.txt</dt>
+      <dd>Whether <code>/llms.txt</code> returned a 200 response. This is an emerging convention for sites to declare AI-indexing preferences, proposed at <a href="https://llmstxt.org" style="color:var(--gray-4)">llmstxt.org</a>.</dd>
+    </dl>
+
+    <h3>Technology stack</h3>
+    <dl class="glossary">
+      <dt>Technologies detected</dt>
+      <dd>CMS platforms, analytics tools, CDNs, JavaScript frameworks, and server-side languages identified by matching 7,600+ Wappalyzer fingerprint patterns against the homepage HTML, HTTP response headers, and script URLs. Detection is probabilistic — a match indicates strong evidence, not certainty.</dd>
+    </dl>
+
+    <h3>Static accessibility</h3>
+    <p>These signals are extracted from raw HTML without executing JavaScript. They identify common structural issues, not WCAG compliance.</p>
+    <dl class="glossary">
+      <dt>Has page title</dt>
+      <dd>Whether the HTML <code>&lt;title&gt;</code> element is present and non-empty.</dd>
+      <dt>Has html lang</dt>
+      <dd>Whether the <code>&lt;html&gt;</code> element carries a <code>lang</code> attribute. Required for screen readers to use the correct language engine.</dd>
+      <dt>Has main landmark</dt>
+      <dd>Whether a <code>&lt;main&gt;</code> element or <code>role="main"</code> is present. Helps assistive technology skip to primary content.</dd>
+      <dt>Has nav landmark</dt>
+      <dd>Whether a <code>&lt;nav&gt;</code> element or <code>role="navigation"</code> is present.</dd>
+      <dt>Images missing alt</dt>
+      <dd>Count of <code>&lt;img&gt;</code> elements without an <code>alt</code> attribute in the homepage HTML. Averaged across domains in aggregate views.</dd>
+      <dt>Inputs missing labels</dt>
+      <dd>Count of <code>&lt;input&gt;</code> elements not associated with a <code>&lt;label&gt;</code> via <code>for</code>/id or <code>aria-label</code>. Averaged across domains.</dd>
+    </dl>
   </div>
 </div>
 
 <footer class="site-footer">
-  <span class="footer-copy" id="footer-copy">publicwebobservatory.org</span>
+  <span class="footer-copy" id="footer-copy">civicwebindex.org</span>
   <ul class="footer-links">
     <li><a onclick="switchTab('methods')">Methodology</a></li>
     <li><a href="/llms.txt">llms.txt</a></li>
@@ -889,6 +975,7 @@ function advanceFeed() {
   const li = document.createElement('li');
   li.className = 'feed-item entering';
   li.innerHTML = renderFeedItem(next);
+  li.onclick = () => showDomain(next.domain);
   list.prepend(li);
 
   while (list.children.length > FEED_VISIBLE) {
@@ -909,9 +996,11 @@ async function startFeed() {
 
   // Pre-populate FEED_VISIBLE items
   for (let i = 0; i < Math.min(FEED_VISIBLE, feedItems.length); i++) {
+    const d = feedItems[i];
     const li = document.createElement('li');
     li.className = 'feed-item';
-    li.innerHTML = renderFeedItem(feedItems[i]);
+    li.innerHTML = renderFeedItem(d);
+    li.onclick = () => showDomain(d.domain);
     list.appendChild(li);
   }
   feedOffset = FEED_VISIBLE;
@@ -930,17 +1019,49 @@ function renderOverview() {
   document.getElementById('stat-types').textContent = orgTypes.length;
 
   document.getElementById('hero-meta').innerHTML =
-    `Homepage availability, HTTPS/TLS configuration, machine-readability, hosting infrastructure, ` +
-    `and automated accessibility signals for <strong>${total.toLocaleString()}</strong> ` +
-    `domains sampled from the CISA <strong>.gov</strong> registry. Crawled transparently — no bot-protection bypass, no deep crawling.`;
+    `Availability, HTTPS posture, hosting, technology, and accessibility signals across ` +
+    `<strong>${total.toLocaleString()}</strong> government and nonprofit domains.`;
 
   document.getElementById('footer-copy').textContent =
-    `publicwebobservatory.org · CISA .gov registry sample · Last observation ${fmtDate(summary.dataset_last_checked_at)}`;
+    `civicwebindex.org · Last observation ${fmtDate(summary.dataset_last_checked_at)}`;
 }
 
 function sumBlocked(status) {
   const blockedStatuses = ['captcha', 'bot_challenge', 'blocked_by_cdn', 'http_403', 'http_429'];
   return status.filter(s => blockedStatuses.includes(s.status)).reduce((a, s) => a + s.count, 0);
+}
+
+// ── Tech filter ──
+let _techAll = [];
+let _techTotal = 0;
+const TECH_DEFAULT = 25;
+
+function renderTech(techs, total) {
+  _techAll = techs;
+  _techTotal = total;
+  const q = (document.getElementById('tech-filter') || {}).value || '';
+  filterTech(q);
+}
+
+function filterTech(q) {
+  const filtered = q.trim()
+    ? _techAll.filter(t => t.technology.toLowerCase().includes(q.toLowerCase()))
+    : _techAll.slice(0, TECH_DEFAULT);
+
+  const techMax = filtered.length ? Math.max(...filtered.map(t => t.count), 1) : 1;
+  const el = document.getElementById('insight-technologies');
+  const footer = document.getElementById('tech-footer');
+  if (!el) return;
+
+  el.innerHTML = filtered.length
+    ? filtered.map(t => bar(t.technology, t.count, techMax, `${t.count.toLocaleString()} (${pct(t.count, _techTotal)})`)).join('')
+    : '<div style="color:var(--gray-3);font-size:13px;padding:.5rem 0">No matching technologies.</div>';
+
+  if (footer) {
+    footer.textContent = q.trim()
+      ? `${filtered.length} match${filtered.length === 1 ? '' : 'es'} of ${_techAll.length} technologies`
+      : `Top ${Math.min(TECH_DEFAULT, _techAll.length)} of ${_techAll.length} technologies detected`;
+  }
 }
 
 // ── Insights ──
@@ -975,7 +1096,7 @@ function renderInsights() {
   `;
 
   document.getElementById('insights-findings').innerHTML = [
-    `<strong>${https.https_pct}%</strong> serve HTTPS — but only <strong>${https.redirects_pct}%</strong> redirect plain HTTP traffic to it.`,
+    `<strong>${https.https_pct}%</strong> serve HTTPS, but only <strong>${https.redirects_pct}%</strong> redirect plain HTTP traffic to it.`,
     topBlocker ? `<strong>${pct(topBlocker.count, total)}</strong> of domains blocked our crawler outright, most by <strong>${topBlocker.block_type.replace(/_/g,' ')}</strong>.` : '',
     topTechName ? `<strong>${topTechName.technology}</strong> is the most common technology, detected on <strong>${pct(topTechName.count, total)}</strong> of domains${wpPct ? ` · WordPress powers ${wpPct}` : ''}.` : '',
     `Only <strong>${pct(files.llms_txt, total)}</strong> of domains serve <strong>llms.txt</strong>, the emerging AI-indexing convention.`,
@@ -1008,13 +1129,17 @@ function renderInsights() {
     bar('llms.txt', files.llms_txt, total, pct(files.llms_txt, total)),
   ].join('');
 
+  const a11yScanned = a11y.domains_scanned || 0;
   document.getElementById('insight-a11y').innerHTML = [
-    bar('Has <title>', Math.round(a11y.pct_has_title * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_title}%`),
-    bar('Has html lang attr', Math.round(a11y.pct_has_html_lang * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_html_lang}%`),
-    bar('Has main landmark', Math.round(a11y.pct_has_main_landmark * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_main_landmark}%`),
-    bar('Has nav landmark', Math.round(a11y.pct_has_nav_landmark * a11y.domains_scanned / 100), a11y.domains_scanned, `${a11y.pct_has_nav_landmark}%`),
-    bar('Avg images missing alt', a11y.avg_images_missing_alt, 10, a11y.avg_images_missing_alt),
-    bar('Avg inputs missing labels', a11y.avg_inputs_missing_labels, 10, a11y.avg_inputs_missing_labels),
+    bar('Has page title', Math.round(a11y.pct_has_title * a11yScanned / 100), a11yScanned, `${a11y.pct_has_title}%`),
+    bar('Has html lang', Math.round(a11y.pct_has_html_lang * a11yScanned / 100), a11yScanned, `${a11y.pct_has_html_lang}%`),
+    bar('Has main landmark', Math.round(a11y.pct_has_main_landmark * a11yScanned / 100), a11yScanned, `${a11y.pct_has_main_landmark}%`),
+    bar('Has nav landmark', Math.round(a11y.pct_has_nav_landmark * a11yScanned / 100), a11yScanned, `${a11y.pct_has_nav_landmark}%`),
+    `<div class="a11y-stats">
+      <div class="a11y-stat"><div class="a11y-n">${a11y.avg_images_missing_alt ?? '—'}</div><div class="a11y-label">avg images missing alt (per domain)</div></div>
+      <div class="a11y-stat"><div class="a11y-n">${a11y.avg_inputs_missing_labels ?? '—'}</div><div class="a11y-label">avg inputs missing labels (per domain)</div></div>
+      <div class="a11y-stat"><div class="a11y-n">${a11yScanned.toLocaleString()}</div><div class="a11y-label">domains with HTML response scanned</div></div>
+    </div>`,
   ].join('');
 
   if (blocking && blocking.length) {
@@ -1028,11 +1153,7 @@ function renderInsights() {
     ].join('');
   }
 
-  const topTech = (technologies || []).slice(0, 15);
-  const techMax = topTech.length ? Math.max(...topTech.map(t => t.count), 1) : 1;
-  document.getElementById('insight-technologies').innerHTML = topTech.length
-    ? topTech.map(t => bar(t.technology, t.count, techMax, `${t.count.toLocaleString()} (${pct(t.count, total)})`)).join('')
-    : '<div style="color:var(--gray-3);font-size:13px;padding:.5rem 0">No technology data yet — crawl some domains first.</div>';
+  renderTech(technologies || [], total);
 
   // Fade in the KPI row and all insight grids
   triggerFade(document.getElementById('insights-kpis'));
@@ -1096,8 +1217,10 @@ function statusClass(status, blockType) {
   return 's-failed';
 }
 
+const FILE_LABELS = { R: 'robots.txt', S: 'sitemap.xml', L: 'llms.txt' };
 function fileBadge(label, available) {
-  return `<span class="${available ? 'on' : 'off'}">${label}</span>`;
+  const title = FILE_LABELS[label] || label;
+  return `<span class="${available ? 'on' : 'off'}" title="${title}">${title}</span>`;
 }
 
 async function loadBrowse() {
@@ -1155,20 +1278,8 @@ function fieldRow(key, val, boolish) {
   return `<div class="field-row"><span class="field-key">${key}</span><span class="field-val ${cls}">${display}</span></div>`;
 }
 
-async function showDomain(domain) {
-  switchTab('domain');
-  document.getElementById('domain-content').innerHTML = 'Loading…';
-  try {
-    const [d, history] = await Promise.all([
-      fetchJSON(`${API}/domains/${encodeURIComponent(domain)}`),
-      fetchJSON(`${API}/domains/${encodeURIComponent(domain)}/history`),
-    ]);
-    renderDomainProfile(d, history);
-    triggerFade(document.getElementById('domain-content'));
-  } catch (e) {
-    console.error(e);
-    document.getElementById('domain-content').innerHTML = 'Failed to load this domain.';
-  }
+function showDomain(domain) {
+  window.location.href = `/domains/${encodeURIComponent(domain)}`;
 }
 
 function renderDomainProfile(d, history) {
@@ -1304,7 +1415,7 @@ function wireFilters() {
     await loadBrowse();
   } catch (e) {
     console.error('Failed to load data', e);
-    document.getElementById('hero-meta').textContent = 'Failed to load dataset — is the API running?';
+    document.getElementById('hero-meta').textContent = 'Failed to load dataset. Is the API running?';
   }
   // Start the feed independently — don't block init if it fails
   startFeed().catch(() => {});
