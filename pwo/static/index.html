@@ -5,586 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Civic Web Index</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --black: #111;
-  --white: #fff;
-  --gray-1: #f4f4f4;
-  --gray-2: #e0e0e0;
-  --gray-3: #999;
-  --gray-4: #555;
-  --fail: #c0392b;
-  --warn: #b9770e;
-  --ok: #2a9d2a;
-  --mono: 'JetBrains Mono', monospace;
-}
-
-body {
-  background: var(--white);
-  color: var(--black);
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ── HEADER ── */
-.site-header {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 1.75rem 1.5rem;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.wordmark {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--black);
-  text-decoration: none;
-  letter-spacing: .01em;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.site-nav {
-  display: flex;
-  gap: 1.75rem;
-  list-style: none;
-  align-items: baseline;
-}
-
-.site-nav button {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--gray-3);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color .12s;
-  letter-spacing: .01em;
-}
-.site-nav button:hover { color: var(--black); }
-.site-nav button.active {
-  color: var(--black);
-  font-weight: 500;
-}
-
-.header-rule {
-  max-width: 900px;
-  margin: 0 auto;
-  border: none;
-  border-top: 1px solid var(--gray-2);
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.view { display: none; }
-.view.active { display: block; animation: fadeUp 0.18s ease both; }
-.fade-in { animation: fadeUp 0.18s ease both; }
-
-/* ════════════════════════
-   LANDING
-════════════════════════ */
-.landing {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.landing-hero {
-  padding: 3.5rem 0 3rem;
-  max-width: 620px;
-}
-
-.landing-hero h1 {
-  font-size: 24px;
-  font-weight: 300;
-  line-height: 1.4;
-  letter-spacing: -.015em;
-  color: var(--black);
-  margin-bottom: .875rem;
-}
-
-.landing-hero h1 strong { font-weight: 500; }
-
-.landing-meta {
-  font-size: 14px;
-  color: var(--gray-3);
-  line-height: 1.65;
-  margin-bottom: 2rem;
-}
-
-.landing-meta strong { color: var(--black); font-weight: 500; }
-
-.hero-actions { display: flex; gap: 1.25rem; align-items: center; }
-
-.btn-primary {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--white);
-  background: var(--black);
-  border: none;
-  padding: 8px 18px;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: opacity .12s;
-}
-.btn-primary:hover { opacity: .7; }
-
-.btn-ghost {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: var(--gray-3);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color .12s;
-}
-.btn-ghost:hover { color: var(--black); }
-
-.scale-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--gray-2);
-  border-bottom: 1px solid var(--gray-2);
-  margin-bottom: 3.5rem;
-}
-
-.scale-stat { padding: 1.75rem 0; }
-.scale-stat:not(:last-child) {
-  border-right: 1px solid var(--gray-2);
-  padding-right: 2rem;
-  margin-right: 2rem;
-}
-
-.scale-n {
-  font-size: 32px;
-  font-weight: 300;
-  letter-spacing: -.025em;
-  line-height: 1;
-  margin-bottom: .3rem;
-}
-
-.scale-label { font-size: 12px; color: var(--gray-3); }
-
-
-/* ════════════════════════
-   BROWSE
-════════════════════════ */
-.browse { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
-
-.filter-bar {
-  display: flex;
-  gap: .5rem;
-  align-items: center;
-  padding: 1.25rem 0 1rem;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--gray-2);
-}
-
-.filter-input {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: var(--black);
-  background: var(--white);
-  border: 1px solid var(--gray-2);
-  border-radius: 2px;
-  padding: 5px 10px;
-  width: 210px;
-  outline: none;
-  transition: border-color .12s;
-}
-.filter-input:focus { border-color: var(--black); }
-.filter-input::placeholder { color: var(--gray-3); }
-
-.filter-select {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: var(--gray-4);
-  background: var(--white);
-  border: 1px solid var(--gray-2);
-  border-radius: 2px;
-  padding: 5px 10px;
-  outline: none;
-  cursor: pointer;
-}
-.filter-select:focus { border-color: var(--black); }
-
-.filter-count { font-size: 12px; color: var(--gray-3); margin-left: auto; }
-
-.data-table { width: 100%; border-collapse: collapse; margin-bottom: .75rem; }
-
-.data-table th {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--gray-3);
-  text-align: left;
-  padding: .625rem .75rem .625rem 0;
-  border-bottom: 1px solid var(--black);
-  white-space: nowrap;
-}
-.data-table th:last-child { text-align: right; padding-right: 0; }
-
-.data-table td {
-  padding: .625rem .75rem .625rem 0;
-  border-bottom: 1px solid var(--gray-2);
-  vertical-align: top;
-  font-size: 13px;
-}
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: var(--gray-1); }
-
-.td-domain {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--black);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.td-domain:hover { text-decoration: underline; text-underline-offset: 2px; }
-
-.td-org { font-size: 11px; color: var(--gray-3); margin-top: 2px; font-weight: 300; }
-.td-mono { font-family: var(--mono); font-size: 11px; color: var(--gray-4); }
-
-.td-files { font-family: var(--mono); font-size: 11px; white-space: nowrap; }
-.td-files span { display: inline-block; }
-.td-files span + span { margin-left: .4rem; }
-.td-files span.on { color: var(--black); font-weight: 500; }
-.td-files span.off { color: var(--gray-2); }
-
-.td-status { text-align: right; font-family: var(--mono); font-size: 11px; white-space: nowrap; }
-.td-status::before { content: '●'; font-size: 8px; margin-right: 4px; vertical-align: middle; }
-.td-status.s-ok::before { color: var(--ok); }
-.td-status.s-blocked::before { color: var(--warn); }
-.td-status.s-failed::before { color: var(--fail); }
-
-.empty-row td { text-align: center; color: var(--gray-3); padding: 2.5rem 0; }
-
-.table-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: .75rem 0 2.5rem;
-  border-top: 1px solid var(--gray-2);
-}
-.page-count { font-size: 12px; color: var(--gray-3); }
-.page-btns { display: flex; gap: .375rem; }
-.page-btn {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--gray-4);
-  background: var(--gray-1);
-  border: none;
-  padding: 4px 9px;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: all .12s;
-}
-.page-btn:hover:not(:disabled) { background: var(--black); color: var(--white); }
-.page-btn:disabled { opacity: .35; cursor: default; }
-
-.browse-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; padding-bottom: 3rem; }
-
-.bnav-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--gray-3);
-  margin-bottom: .75rem;
-  padding-bottom: .5rem;
-  border-bottom: 1px solid var(--gray-2);
-}
-
-.state-grid { display: flex; flex-wrap: wrap; gap: .25rem; }
-
-.state-btn {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--gray-4);
-  background: var(--gray-1);
-  border: none;
-  padding: 3px 7px;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: all .12s;
-  white-space: nowrap;
-}
-.state-btn sup { font-size: 9px; color: var(--gray-3); margin-left: 1px; }
-.state-btn:hover { background: var(--black); color: var(--white); }
-.state-btn:hover sup { color: rgba(255,255,255,.5); }
-.state-btn.active { background: var(--black); color: var(--white); }
-.state-btn.active sup { color: rgba(255,255,255,.5); }
-
-.sector-list { display: flex; flex-direction: column; gap: .25rem; }
-
-.sector-btn {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--gray-4);
-  background: var(--gray-1);
-  border: none;
-  padding: 5px 10px;
-  border-radius: 2px;
-  cursor: pointer;
-  text-align: left;
-  transition: all .12s;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.sector-btn span { font-family: var(--mono); font-size: 10px; color: var(--gray-3); }
-.sector-btn:hover { background: var(--black); color: var(--white); }
-.sector-btn:hover span { color: rgba(255,255,255,.5); }
-.sector-btn.active { background: var(--black); color: var(--white); }
-.sector-btn.active span { color: rgba(255,255,255,.5); }
-
-/* ════════════════════════
-   INSIGHTS
-════════════════════════ */
-.insights { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
-
-.insights-header { padding: 3rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
-.insights-header h2 { font-size: 18px; font-weight: 400; letter-spacing: -.01em; margin-bottom: .375rem; }
-.insights-header p { font-size: 13px; color: var(--gray-3); line-height: 1.6; }
-
-.insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 3rem; }
-.insight-grid.full { grid-template-columns: 1fr; }
-
-.insight-panel-title {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--gray-3);
-  margin-bottom: 1rem;
-  padding-bottom: .5rem;
-  border-bottom: 1px solid var(--gray-2);
-}
-
-.insight-panel-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
-.insight-panel-title-row .insight-panel-title { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-.tech-filter { font-family: var(--mono); font-size: 12px; border: 1px solid var(--gray-2); border-radius: 3px; padding: .25rem .5rem; color: var(--black); outline: none; width: 200px; }
-.tech-filter:focus { border-color: var(--gray-3); }
-.tech-footer { font-size: 12px; color: var(--gray-3); margin-top: .75rem; font-family: var(--mono); }
-.a11y-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2rem; margin-top: .5rem; }
-.a11y-stat { display: flex; flex-direction: column; gap: .2rem; }
-.a11y-n { font-size: 20px; font-weight: 300; letter-spacing: -.02em; }
-.a11y-label { font-size: 12px; color: var(--gray-3); }
-.bar-row { display: flex; align-items: center; gap: .75rem; padding: .375rem 0; }
-.bar-label { font-size: 12px; color: var(--gray-4); width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bar-track { flex: 1; height: 5px; background: var(--gray-1); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; background: var(--black); border-radius: 2px; transition: width 0.4s ease; }
-.bar-value { font-family: var(--mono); font-size: 11px; color: var(--gray-4); width: 72px; flex-shrink: 0; text-align: right; }
-
-.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--gray-2); border: 1px solid var(--gray-2); margin-bottom: 2.5rem; }
-.kpi-cell { background: var(--white); padding: 1rem 1.125rem; }
-.kpi-n { font-size: 22px; font-weight: 300; letter-spacing: -.02em; line-height: 1; margin-bottom: .3rem; }
-.kpi-label { font-size: 11px; color: var(--gray-3); }
-
-/* ── KEY FINDINGS ── */
-.findings-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--gray-2);
-  border: 1px solid var(--gray-2);
-  margin-bottom: 3rem;
-}
-.finding-cell {
-  background: var(--gray-1);
-  padding: .875rem 1.125rem;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--gray-4);
-}
-.finding-cell strong { color: var(--black); font-weight: 500; }
-
-/* ── LIVE FEED ── */
-.feed-section {
-  border-top: 1px solid var(--gray-2);
-  padding: 2rem 0 3rem;
-  margin-top: 2rem;
-}
-.feed-eyebrow {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--gray-3);
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-}
-.feed-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--ok);
-  animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-.feed-list { list-style: none; }
-.feed-item { cursor: pointer; }
-.feed-item:hover .feed-domain { text-decoration: underline; }
-.feed-item {
-  display: grid;
-  grid-template-columns: 180px 1fr auto;
-  gap: .75rem;
-  padding: .4rem 0;
-  border-bottom: 1px solid var(--gray-1);
-  font-size: 12px;
-  align-items: baseline;
-}
-.feed-item:last-child { border-bottom: none; }
-.feed-domain { font-family: var(--mono); color: var(--black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.feed-signal { color: var(--gray-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.feed-signal.warn { color: var(--warn); }
-.feed-signal.ok   { color: var(--ok); }
-.feed-signal.fail { color: var(--fail); }
-.feed-age { font-family: var(--mono); font-size: 11px; color: var(--gray-3); white-space: nowrap; }
-.feed-item.entering { animation: fadeUp 0.25s ease both; }
-
-/* ════════════════════════
-   DOMAIN PROFILE
-════════════════════════ */
-.domain-profile { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
-
-.domain-back {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--gray-3);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 1.5rem 0 0;
-}
-.domain-back:hover { color: var(--black); }
-
-.domain-header { padding: 1rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
-.domain-name { font-family: var(--mono); font-size: 20px; font-weight: 500; margin-bottom: .375rem; }
-.domain-sub { font-size: 13px; color: var(--gray-3); }
-
-.field-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
-
-.field-group-title {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--gray-3);
-  margin-bottom: .75rem;
-  padding-bottom: .5rem;
-  border-bottom: 1px solid var(--gray-2);
-}
-
-.field-row { display: flex; justify-content: space-between; gap: .5rem; padding: .3rem 0; font-size: 12.5px; }
-.field-key { color: var(--gray-3); }
-.field-val { font-family: var(--mono); color: var(--black); text-align: right; }
-.field-val.ok { color: var(--ok); }
-.field-val.fail { color: var(--fail); }
-
-.history-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
-.history-table th {
-  font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--gray-3); text-align: left; padding: .5rem .75rem .5rem 0;
-  border-bottom: 1px solid var(--black); white-space: nowrap;
-}
-.history-table td { padding: .5rem .75rem .5rem 0; border-bottom: 1px solid var(--gray-2); font-size: 12.5px; vertical-align: top; }
-.history-table tr:last-child td { border-bottom: none; }
-
-.methods-body { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
-.methods-body h2 { font-size: 18px; font-weight: 400; margin-bottom: 1rem; }
-.methods-body h3 { font-size: 13px; font-weight: 500; margin: 1.75rem 0 .5rem; }
-.methods-body p, .methods-body li { font-size: 13px; color: var(--gray-4); line-height: 1.65; }
-.methods-body ul { padding-left: 1.25rem; margin-bottom: .5rem; }
-.glossary { margin: .75rem 0 1.5rem; }
-.glossary dt { font-size: 13px; font-weight: 500; color: var(--black); margin-top: .875rem; font-family: var(--mono); }
-.glossary dd { font-size: 13px; color: var(--gray-4); line-height: 1.65; margin: .2rem 0 0 0; }
-.methods-body code {
-  font-family: var(--mono);
-  font-size: 12px;
-  background: var(--gray-1);
-  padding: 1px 5px;
-  border-radius: 2px;
-}
-
-/* ── FOOTER ── */
-.site-footer {
-  border-top: 1px solid var(--gray-2);
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 1.25rem 1.5rem 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: .75rem;
-}
-
-.footer-copy { font-size: 12px; color: var(--gray-3); }
-.footer-links { display: flex; gap: 1.25rem; list-style: none; }
-.footer-links a { font-size: 12px; color: var(--gray-3); text-decoration: none; }
-.footer-links a:hover { color: var(--black); }
-
-/* ════════════════════════
-   MOBILE
-════════════════════════ */
-@media (max-width: 640px) {
-  .site-header { padding: 1.25rem 1rem; flex-wrap: wrap; gap: .75rem; }
-  .site-nav { gap: 1.1rem; flex-wrap: wrap; }
-  .site-nav button { font-size: 12px; }
-
-  .landing { padding: 0 1rem; }
-  .landing-hero { padding: 2rem 0 1.75rem; }
-  .landing-hero h1 { font-size: 20px; }
-  .hero-actions { flex-wrap: wrap; gap: .75rem; }
-
-  .scale-row { grid-template-columns: 1fr 1fr; }
-  .scale-stat:nth-child(3) { grid-column: span 2; border-right: none; border-top: 1px solid var(--gray-2); padding-top: 1.25rem; margin-right: 0; padding-right: 0; }
-  .scale-stat:not(:last-child) { padding-right: 0; margin-right: 0; }
-
-  .browse { padding: 0 1rem; }
-  .filter-input { width: 100%; }
-  .filter-select { font-size: 12px; }
-  .filter-count { margin-left: 0; }
-
-  .browse-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .data-table { min-width: 560px; }
-
-  .browse-nav { flex-direction: column; gap: 2rem; }
-
-  .insights { padding: 0 1rem 3rem; }
-  .kpi-row { grid-template-columns: 1fr 1fr; }
-  .insight-grid { grid-template-columns: 1fr; gap: 2rem; }
-  .findings-row { grid-template-columns: 1fr; }
-  .tech-filter { width: 100%; }
-  .insight-panel-title-row { flex-direction: column; align-items: flex-start; gap: .5rem; }
-
-  .domain-profile { padding: 0 1rem 3rem; }
-  .field-grid { grid-template-columns: 1fr; gap: 1.5rem; }
-
-  .methods-body { padding: 0 1rem 3rem; }
-
-  .site-footer { flex-direction: column; gap: .5rem; align-items: flex-start; }
-}
-</style>
+<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
@@ -595,6 +16,7 @@ body {
     <li><button id="nav-home" class="active" onclick="switchTab('home')">Overview</button></li>
     <li><button id="nav-browse" onclick="switchTab('browse')">Browse</button></li>
     <li><button id="nav-insights" onclick="switchTab('insights')">Insights</button></li>
+    <li><button id="nav-about" onclick="switchTab('about')">About</button></li>
     <li><button id="nav-methods" onclick="switchTab('methods')" style="color:var(--gray-3)">Methods</button></li>
   </ul>
 </div>
@@ -606,27 +28,10 @@ body {
 
     <div class="landing-hero">
       <h1>Mapping the <strong>digital infrastructure</strong> of the American civic web</h1>
-      <p class="landing-meta" id="hero-meta">
-        Loading dataset…
-      </p>
+      <p class="landing-meta" id="hero-meta">Loading dataset…</p>
       <div class="hero-actions">
         <button class="btn-primary" onclick="switchTab('browse')">Browse domains</button>
         <button class="btn-ghost" onclick="switchTab('insights')">View insights →</button>
-      </div>
-    </div>
-
-    <div class="scale-row">
-      <div class="scale-stat">
-        <div class="scale-n" id="stat-total">—</div>
-        <div class="scale-label">Domains checked</div>
-      </div>
-      <div class="scale-stat">
-        <div class="scale-n" id="stat-states">—</div>
-        <div class="scale-label">States &amp; territories</div>
-      </div>
-      <div class="scale-stat">
-        <div class="scale-n" id="stat-types">—</div>
-        <div class="scale-label">Entity types mapped</div>
       </div>
     </div>
 
@@ -764,6 +169,39 @@ body {
   </div>
 </div>
 
+<!-- ══ ABOUT ══ -->
+<div id="view-about" class="view">
+  <div class="methods-body">
+    <h2>About Civic Web Index</h2>
+    <p>Nonprofits and government agencies are the backbone of American civic life. They deliver healthcare, education, housing assistance, emergency services, and democratic infrastructure to every community in the country. The web is how most people access them.</p>
+
+    <p style="margin-top:1rem">So who's checking whether those websites are actually working?</p>
+
+    <p style="margin-top:1rem">Civic Web Index is a systematic, public, machine-readable index of the digital infrastructure supporting the American civic sector. We crawl government and nonprofit domains — checking availability, HTTPS security posture, hosting providers, technology stacks, and basic accessibility signals — and make the results freely available.</p>
+
+    <h3>Why it matters</h3>
+    <p>A city government website that's down means a resident can't pay a bill or find a service. A nonprofit site without HTTPS is a security risk for every visitor. An inaccessible site excludes the people those organizations exist to serve. These aren't edge cases — they're systemic, measurable, and largely invisible without a project like this.</p>
+
+    <h3>Who it's for</h3>
+    <ul style="margin-top:.5rem">
+      <li><strong>Journalists</strong> investigating digital equity, government accountability, or civic tech.</li>
+      <li><strong>Policy researchers</strong> studying public sector digital infrastructure.</li>
+      <li><strong>Web teams</strong> at nonprofits and agencies who want to benchmark against peers.</li>
+      <li><strong>Funders</strong> assessing the digital health of the organizations they support.</li>
+      <li><strong>Advocates</strong> making the case for investment in civic digital infrastructure.</li>
+    </ul>
+
+    <h3>What we don't do</h3>
+    <p>We don't score or rank organizations. We don't claim a low score means failure — organizations operate under real resource constraints. We publish raw, verifiable observations and let you draw your own conclusions.</p>
+
+    <h3>Coverage</h3>
+    <p>Current dataset covers <span id="about-total">—</span> domains: federal, state, and local government from the CISA .gov registry, and nonprofits from IRS 990 filings. Coverage grows with each crawl cycle.</p>
+
+    <h3>Get in touch</h3>
+    <p>Questions, corrections, or press inquiries: <a href="mailto:hello@civicwebindex.org" style="color:var(--black)">hello@civicwebindex.org</a></p>
+  </div>
+</div>
+
 <!-- ══ METHODS ══ -->
 <div id="view-methods" class="view">
   <div class="methods-body">
@@ -794,82 +232,43 @@ body {
     <h2 style="margin-top:3rem">Metric glossary</h2>
     <p>Every signal is a direct observation from a single homepage request. No inference, no scoring.</p>
 
-    <h3>Availability &amp; status</h3>
-    <dl class="glossary">
-      <dt>Collection status</dt>
-      <dd><strong>ok</strong> — homepage returned a 2xx or 3xx response. <strong>dns_failed</strong> — domain did not resolve. <strong>http_error</strong> — server responded with a 4xx/5xx. <strong>captcha / bot_challenge / blocked_by_cdn / http_403 / http_429</strong> — bot-protection response detected and recorded without bypass.</dd>
-      <dt>Block type</dt>
-      <dd>Classifies the specific blocking mechanism when status is not <em>ok</em>: CAPTCHA page, Cloudflare/CDN challenge, explicit 403 Forbidden, or 429 Too Many Requests.</dd>
-      <dt>Homepage status code</dt>
-      <dd>The final HTTP status code after following redirects.</dd>
-      <dt>Response time</dt>
-      <dd>Time in milliseconds from opening the TCP connection to receiving the complete response body, measured over a single request with a 10-second timeout.</dd>
-    </dl>
-
-    <h3>HTTPS &amp; TLS</h3>
-    <dl class="glossary">
-      <dt>HTTPS available</dt>
-      <dd>Whether the domain served a valid response over <code>https://</code>. Does not require a valid certificate.</dd>
-      <dt>HTTP redirects to HTTPS</dt>
-      <dd>Whether a plain <code>http://</code> request is redirected to <code>https://</code> before content is served.</dd>
-      <dt>TLS valid</dt>
-      <dd>Whether the TLS certificate chain is trusted, the hostname matches, and the certificate has not expired, as verified by Python's <code>ssl</code> module.</dd>
-      <dt>TLS issuer</dt>
-      <dd>The organization name from the certificate's issuer field (e.g. Let's Encrypt, DigiCert, Sectigo).</dd>
-      <dt>TLS days until expiry</dt>
-      <dd>Calendar days between the observation date and the certificate's <code>notAfter</code> field. Values under 30 are flagged as expiring soon.</dd>
-    </dl>
-
-    <h3>DNS &amp; hosting</h3>
-    <dl class="glossary">
-      <dt>Primary IP</dt>
-      <dd>First A record returned by DNS resolution of the bare domain.</dd>
-      <dt>ASN / ASN org</dt>
-      <dd>Autonomous System Number and registered organization for the primary IP, looked up via the RIPE/ARIN database. Indicates the network owner (e.g. Amazon, Cloudflare, a university).</dd>
-      <dt>Nameserver hint</dt>
-      <dd>Hosting or DNS provider inferred from NS record patterns (e.g. <code>*.awsdns.com</code> → AWS, <code>*.cloudflare.com</code> → Cloudflare). "unknown" if no pattern matches.</dd>
-      <dt>CNAME hint</dt>
-      <dd>CDN or platform inferred from CNAME records (e.g. <code>*.azurewebsites.net</code> → Azure).</dd>
-    </dl>
-
-    <h3>Machine-readable files</h3>
-    <dl class="glossary">
-      <dt>robots.txt</dt>
-      <dd>Whether <code>/robots.txt</code> returned a 200 response with non-empty body. The crawler parses allow/disallow rules and records whether the homepage is permitted.</dd>
-      <dt>sitemap.xml</dt>
-      <dd>Whether <code>/sitemap.xml</code> returned a 200 response. Content is not parsed beyond detection.</dd>
-      <dt>llms.txt</dt>
-      <dd>Whether <code>/llms.txt</code> returned a 200 response. This is an emerging convention for sites to declare AI-indexing preferences, proposed at <a href="https://llmstxt.org" style="color:var(--gray-4)">llmstxt.org</a>.</dd>
-    </dl>
-
-    <h3>Technology stack</h3>
-    <dl class="glossary">
-      <dt>Technologies detected</dt>
-      <dd>CMS platforms, analytics tools, CDNs, JavaScript frameworks, and server-side languages identified by matching 7,600+ Wappalyzer fingerprint patterns against the homepage HTML, HTTP response headers, and script URLs. Detection is probabilistic — a match indicates strong evidence, not certainty.</dd>
-    </dl>
-
-    <h3>Static accessibility</h3>
-    <p>These signals are extracted from raw HTML without executing JavaScript. They identify common structural issues, not WCAG compliance.</p>
-    <dl class="glossary">
-      <dt>Has page title</dt>
-      <dd>Whether the HTML <code>&lt;title&gt;</code> element is present and non-empty.</dd>
-      <dt>Has html lang</dt>
-      <dd>Whether the <code>&lt;html&gt;</code> element carries a <code>lang</code> attribute. Required for screen readers to use the correct language engine.</dd>
-      <dt>Has main landmark</dt>
-      <dd>Whether a <code>&lt;main&gt;</code> element or <code>role="main"</code> is present. Helps assistive technology skip to primary content.</dd>
-      <dt>Has nav landmark</dt>
-      <dd>Whether a <code>&lt;nav&gt;</code> element or <code>role="navigation"</code> is present.</dd>
-      <dt>Images missing alt</dt>
-      <dd>Count of <code>&lt;img&gt;</code> elements without an <code>alt</code> attribute in the homepage HTML. Averaged across domains in aggregate views.</dd>
-      <dt>Inputs missing labels</dt>
-      <dd>Count of <code>&lt;input&gt;</code> elements not associated with a <code>&lt;label&gt;</code> via <code>for</code>/id or <code>aria-label</code>. Averaged across domains.</dd>
-    </dl>
+    <table class="glossary-table">
+      <thead>
+        <tr><th>Metric</th><th>Category</th><th>What it measures</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Collection status</td><td>Availability</td><td><strong>ok</strong> — 2xx/3xx response. <strong>dns_failed</strong> — domain did not resolve. <strong>http_error</strong> — 4xx/5xx. <strong>captcha / bot_challenge / blocked_by_cdn / http_403 / http_429</strong> — bot-protection detected and recorded without bypass.</td></tr>
+        <tr><td>Block type</td><td>Availability</td><td>Specific blocking mechanism: CAPTCHA, Cloudflare/CDN challenge, 403 Forbidden, or 429 Too Many Requests.</td></tr>
+        <tr><td>Status code</td><td>Availability</td><td>Final HTTP status code after following all redirects.</td></tr>
+        <tr><td>Response time</td><td>Availability</td><td>Milliseconds from TCP connection open to complete response body, with a 10-second timeout.</td></tr>
+        <tr><td>HTTPS available</td><td>HTTPS / TLS</td><td>Whether the domain served a valid response over <code>https://</code>. Does not require a valid certificate.</td></tr>
+        <tr><td>HTTP redirects to HTTPS</td><td>HTTPS / TLS</td><td>Whether a plain <code>http://</code> request is redirected to <code>https://</code> before content is served.</td></tr>
+        <tr><td>TLS valid</td><td>HTTPS / TLS</td><td>Certificate chain is trusted, hostname matches, and cert has not expired — verified by Python's <code>ssl</code> module.</td></tr>
+        <tr><td>TLS issuer</td><td>HTTPS / TLS</td><td>Organization name from the certificate's issuer field (e.g. Let's Encrypt, DigiCert).</td></tr>
+        <tr><td>TLS days until expiry</td><td>HTTPS / TLS</td><td>Calendar days until the certificate's <code>notAfter</code> date. Values under 30 are flagged.</td></tr>
+        <tr><td>Primary IP</td><td>DNS / Hosting</td><td>First A record returned by DNS resolution of the bare domain.</td></tr>
+        <tr><td>ASN / ASN org</td><td>DNS / Hosting</td><td>Autonomous System Number and registered organization for the primary IP. Indicates network owner (Amazon, Cloudflare, a university, etc.).</td></tr>
+        <tr><td>Nameserver hint</td><td>DNS / Hosting</td><td>Hosting or DNS provider inferred from NS record patterns. "unknown" if no pattern matches.</td></tr>
+        <tr><td>CNAME hint</td><td>DNS / Hosting</td><td>CDN or platform inferred from CNAME records.</td></tr>
+        <tr><td>robots.txt</td><td>Files</td><td>Whether <code>/robots.txt</code> returned a 200 response with non-empty body. Allow/disallow rules are parsed.</td></tr>
+        <tr><td>sitemap.xml</td><td>Files</td><td>Whether <code>/sitemap.xml</code> returned a 200 response. Content is not parsed beyond detection.</td></tr>
+        <tr><td>llms.txt</td><td>Files</td><td>Whether <code>/llms.txt</code> returned a 200 response. An emerging convention for AI-indexing preferences (<a href="https://llmstxt.org" style="color:var(--gray-4)">llmstxt.org</a>).</td></tr>
+        <tr><td>Technologies detected</td><td>Technology</td><td>CMS, analytics, CDN, JS frameworks, and server languages identified by 7,600+ Wappalyzer fingerprints matched against HTML, headers, and script URLs. Probabilistic — a match indicates strong evidence, not certainty.</td></tr>
+        <tr><td>Has page title</td><td>Accessibility</td><td>Whether the HTML <code>&lt;title&gt;</code> element is present and non-empty.</td></tr>
+        <tr><td>Has html lang</td><td>Accessibility</td><td>Whether the <code>&lt;html&gt;</code> element carries a <code>lang</code> attribute. Required for screen readers to select the correct language engine.</td></tr>
+        <tr><td>Has main landmark</td><td>Accessibility</td><td>Whether a <code>&lt;main&gt;</code> element or <code>role="main"</code> is present. Helps assistive technology skip to primary content.</td></tr>
+        <tr><td>Has nav landmark</td><td>Accessibility</td><td>Whether a <code>&lt;nav&gt;</code> element or <code>role="navigation"</code> is present.</td></tr>
+        <tr><td>Images missing alt</td><td>Accessibility</td><td>Count of <code>&lt;img&gt;</code> elements without an <code>alt</code> attribute. Averaged across domains in aggregate views.</td></tr>
+        <tr><td>Inputs missing labels</td><td>Accessibility</td><td>Count of <code>&lt;input&gt;</code> elements not associated with a <code>&lt;label&gt;</code>. Averaged across domains.</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
 <footer class="site-footer">
   <span class="footer-copy" id="footer-copy">civicwebindex.org</span>
   <ul class="footer-links">
+    <li><a onclick="switchTab('about')">About</a></li>
     <li><a onclick="switchTab('methods')">Methodology</a></li>
     <li><a href="/llms.txt">llms.txt</a></li>
     <li><a href="/api/health">API</a></li>
@@ -1014,13 +413,12 @@ function renderOverview() {
   if (!summary || !summary.dataset_domains_total) return;
   const total = summary.dataset_domains_total;
 
-  document.getElementById('stat-total').textContent = total.toLocaleString();
-  document.getElementById('stat-states').textContent = states.length;
-  document.getElementById('stat-types').textContent = orgTypes.length;
+  const aboutTotal = document.getElementById('about-total');
+  if (aboutTotal) aboutTotal.textContent = total.toLocaleString();
 
   document.getElementById('hero-meta').innerHTML =
-    `Availability, HTTPS posture, hosting, technology, and accessibility signals across ` +
-    `<strong>${total.toLocaleString()}</strong> government and nonprofit domains.`;
+    `Tracking availability, security posture, hosting, and accessibility across ` +
+    `<strong>${total.toLocaleString()}</strong> government and nonprofit domains. Updated daily.`;
 
   document.getElementById('footer-copy').textContent =
     `civicwebindex.org · Last observation ${fmtDate(summary.dataset_last_checked_at)}`;

@@ -7,42 +7,13 @@
 <meta name="description" content="Web infrastructure signals for {{ d.domain }}{% if d.org_name %} ({{ d.org_name }}){% endif %}: HTTPS status, TLS certificate, hosting, technology stack, and accessibility as of {{ checked_at }}.">
 <link rel="canonical" href="https://civicwebindex.org/domains/{{ d.domain }}">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --black: #111; --white: #fff; --gray-1: #f4f4f4; --gray-2: #e0e0e0;
-  --gray-3: #999; --gray-4: #555; --fail: #c0392b; --warn: #b9770e; --ok: #2a9d2a;
-  --mono: 'JetBrains Mono', monospace;
-}
-body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); }
 a { color: inherit; }
-.site-header { max-width: 900px; margin: 0 auto; padding: 1.75rem 1.5rem; display: flex; align-items: baseline; justify-content: space-between; }
-.wordmark { font-family: var(--mono); font-size: 13px; text-decoration: none; }
-.header-rule { max-width: 900px; margin: 0 auto; border: none; border-top: 1px solid var(--gray-2); }
-.domain-profile { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
-.domain-back { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--gray-3); background: none; border: none; cursor: pointer; padding: 1.5rem 0; display: block; text-decoration: none; }
-.domain-back:hover { color: var(--black); }
-.domain-header { padding: 1rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
-.domain-name { font-family: var(--mono); font-size: 20px; font-weight: 500; margin-bottom: .4rem; }
-.domain-sub { font-size: 13px; color: var(--gray-3); }
-.field-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
-.field-group-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-3); margin-bottom: .875rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
-.field-row { display: flex; justify-content: space-between; align-items: baseline; padding: .3rem 0; border-bottom: 1px solid var(--gray-1); gap: 1rem; }
-.field-key { font-size: 12px; color: var(--gray-3); flex-shrink: 0; }
-.field-val { font-family: var(--mono); font-size: 12px; text-align: right; word-break: break-all; }
-.field-val.ok { color: var(--ok); } .field-val.fail { color: var(--fail); }
-.insight-panel-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-3); margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
 .tech-list { display: flex; flex-wrap: wrap; gap: .4rem; }
 .tech-tag { font-family: var(--mono); font-size: 11px; background: var(--gray-1); padding: .2rem .5rem; border-radius: 2px; }
 .cta { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-2); font-size: 13px; color: var(--gray-3); }
 .cta a { color: var(--black); }
-.site-footer { max-width: 900px; margin: 2rem auto 0; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--gray-2); }
-.footer-copy { font-size: 12px; color: var(--gray-3); }
-@media (max-width: 640px) {
-  .field-grid { grid-template-columns: 1fr; }
-  .site-header { padding: 1.25rem 1rem; }
-  .domain-profile { padding: 0 1rem 3rem; }
-}
 </style>
 </head>
 <body>

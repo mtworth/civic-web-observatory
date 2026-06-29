@@ -1,17 +1,8 @@
--clean up home page, it's duplicative and contains too much detail. subdescription not necessary, maybe just insights across X government and nonprofit domains. 
--need to better define public web (civic web, government and nonprofit web, public sector web?)
--need to clean-up the files thing, no one understand what those acrnoynms mean R L S
--maybe in methods, we need a metric glossary with how it's grabbed and why it's important? 
+
+-human clean-up of copy 
+-remove API and all that shit. If you want full dataset, contact. 
+-buy domain 
+-redo the insights pane, it's just off. perhaps breakit out in thematic section? "Basic HTTP","Accessibility","Machine Navigation",etc. 
+-on robots.txt, probably need deeper analysis on what is allowed and unallowed (not a priority)
 -need to add contact form (not a priority)
 -need to add umami (not a priority)
--rename everything to Civic Web Index
--mobile friendly 
--load times still weird
--deemphasize cisa.gov registry sample, you're putting it everywhere
--the scroll feed is good, but wonder if we should link to domain profile 
--let's make this SSR at domain level, insights level so that we get indexed
--add sitemap, llms.txt, and robots.txt 
--remove all the em-dashes 
--insights page is really bad, we need more work? maybe even select from technology to look at %. accessibility part is cut off too. 
--logo
--on robots.txt, probably need deeper analysis on what is allowed and unallowed, specific bots / crawlers allowed and blocked? (not a priirty)

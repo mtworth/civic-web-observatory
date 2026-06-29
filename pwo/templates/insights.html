@@ -7,41 +7,11 @@
 <meta name="description" content="Aggregate web infrastructure signals across {{ total | format_int }} government and nonprofit domains: HTTPS adoption, TLS posture, hosting distribution, technology stack, and accessibility.">
 <link rel="canonical" href="https://civicwebindex.org/insights">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --black: #111; --white: #fff; --gray-1: #f4f4f4; --gray-2: #e0e0e0;
-  --gray-3: #999; --gray-4: #555; --mono: 'JetBrains Mono', monospace;
-}
-body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); }
-.site-header { max-width: 900px; margin: 0 auto; padding: 1.75rem 1.5rem; display: flex; align-items: baseline; justify-content: space-between; }
-.wordmark { font-family: var(--mono); font-size: 13px; text-decoration: none; }
-.header-rule { max-width: 900px; margin: 0 auto; border: none; border-top: 1px solid var(--gray-2); }
-.insights { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
-.insights-header { padding: 3rem 0 1.5rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 2rem; }
-.insights-header h1 { font-size: 18px; font-weight: 400; margin-bottom: .375rem; }
-.insights-header p { font-size: 13px; color: var(--gray-3); }
-.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--gray-2); border: 1px solid var(--gray-2); margin-bottom: 2.5rem; }
-.kpi-cell { background: var(--white); padding: 1rem 1.125rem; }
-.kpi-n { font-size: 22px; font-weight: 300; letter-spacing: -.02em; line-height: 1; margin-bottom: .3rem; }
-.kpi-label { font-size: 11px; color: var(--gray-3); }
-.insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 3rem; }
-.insight-grid.full { grid-template-columns: 1fr; }
 .panel-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-3); margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--gray-2); }
-.bar-row { display: flex; align-items: center; gap: .75rem; padding: .375rem 0; }
-.bar-label { font-size: 12px; color: var(--gray-4); width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bar-track { flex: 1; height: 5px; background: var(--gray-1); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; background: var(--black); border-radius: 2px; }
-.bar-value { font-family: var(--mono); font-size: 11px; color: var(--gray-4); width: 80px; flex-shrink: 0; text-align: right; }
 .cta { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-2); font-size: 13px; color: var(--gray-3); }
 .cta a { color: var(--black); }
-.site-footer { max-width: 900px; margin: 2rem auto 0; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--gray-2); }
-.footer-copy { font-size: 12px; color: var(--gray-3); }
-@media (max-width: 640px) {
-  .kpi-row { grid-template-columns: 1fr 1fr; }
-  .insight-grid { grid-template-columns: 1fr; }
-  .insights { padding: 0 1rem 3rem; }
-}
 </style>
 </head>
 <body>
