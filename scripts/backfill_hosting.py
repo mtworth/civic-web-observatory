@@ -1,8 +1,9 @@
 """
 Backfill nameserver_provider_hint with raw GeoLite2-ASN org names.
 
-Replaces all existing hints with the authoritative ASN org name from
-the local MaxMind database. Requires data/GeoLite2-ASN.mmdb to exist.
+Uses a JOIN-based UPDATE: resolves all IPs locally, uploads a lookup
+table to the target DB in one batch, then runs a single SQL UPDATE.
+Works efficiently against MotherDuck.
 
 Usage:
     uv run python scripts/backfill_hosting.py [--db PATH] [--dry-run]
@@ -28,51 +29,51 @@ def backfill(db_path: str, dry_run: bool) -> None:
 
     conn = duckdb.connect(db_path)
 
-    print("Fetching observations...")
+    print("Fetching distinct IPs from observations...")
     rows = conn.execute("""
-        SELECT domain, checked_at, primary_ip, nameserver_provider_hint
+        SELECT DISTINCT primary_ip
         FROM observations
         WHERE primary_ip IS NOT NULL
     """).fetchall()
-    print(f"  {len(rows):,} rows with a primary IP")
+    ips = [r[0] for r in rows]
+    print(f"  {len(ips):,} distinct IPs to resolve")
 
-    updates: list[tuple[str | None, str, str]] = []
-
+    print("Resolving via GeoLite2...")
+    lookup: list[tuple[str, str | None]] = []
     with geoip2.database.Reader(str(GEOIP_PATH)) as reader:
-        for domain, checked_at, ip, current_hint in rows:
+        for ip in ips:
             try:
                 record = reader.asn(ip)
-                new_hint = record.autonomous_system_organization
+                org = record.autonomous_system_organization
             except (geoip2.errors.AddressNotFoundError, Exception):
-                new_hint = None
+                org = None
+            lookup.append((ip, org))
 
-            if new_hint != current_hint:
-                updates.append((new_hint, domain, checked_at))
-
-    print(f"  {len(updates):,} rows would change")
+    resolved = sum(1 for _, org in lookup if org)
+    print(f"  {resolved:,} IPs resolved, {len(lookup) - resolved:,} unresolved")
 
     if dry_run:
         print("\nDry run — no changes written.")
-        lookup = {(r[0], r[1]): r[3] for r in rows}
-        print("\nSample updates (first 20):")
-        for new_hint, domain, checked_at in updates[:20]:
-            old = lookup.get((domain, checked_at), "—")
-            print(f"  {domain}: {old!r} -> {new_hint!r}")
+        print("\nSample mappings (first 20):")
+        for ip, org in lookup[:20]:
+            print(f"  {ip} -> {org!r}")
         return
 
-    print("Writing updates...")
-    conn.execute("BEGIN")
-    try:
-        conn.executemany(
-            "UPDATE observations SET nameserver_provider_hint = ? WHERE domain = ? AND checked_at = ?",
-            updates,
-        )
-        conn.execute("COMMIT")
-        print(f"Done. {len(updates):,} rows updated.")
-    except Exception as e:
-        conn.execute("ROLLBACK")
-        print(f"Error — rolled back: {e}")
-        raise
+    print("Uploading lookup table...")
+    conn.execute("CREATE OR REPLACE TEMP TABLE _ip_org (ip VARCHAR, org VARCHAR)")
+    conn.executemany("INSERT INTO _ip_org VALUES (?, ?)", lookup)
+
+    print("Running JOIN-based UPDATE...")
+    result = conn.execute("""
+        UPDATE observations
+        SET nameserver_provider_hint = _ip_org.org
+        FROM _ip_org
+        WHERE observations.primary_ip = _ip_org.ip
+          AND (observations.nameserver_provider_hint IS DISTINCT FROM _ip_org.org)
+    """)
+
+    conn.execute("DROP TABLE IF EXISTS _ip_org")
+    print(f"Done. {result.rowcount if hasattr(result, 'rowcount') else '?'} rows updated.")
 
 
 def main() -> None:
