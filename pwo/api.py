@@ -61,8 +61,8 @@ def get_db():
     MotherDuck handles concurrent reads natively.
 
     After the first connect() call, DuckDB's MotherDuck extension keeps an
-    internal process-level session, so subsequent opens cost ~0ms. The lifespan
-    warmup below ensures that session is established before the first request.
+    internal process-level session, so subsequent opens cost ~0ms. The
+    background refresh loop below establishes that session at startup.
     """
     path = _db_path()
     read_only = not path.startswith("md:")
@@ -73,27 +73,51 @@ def get_db():
         conn.close()
 
 
-def _warmup():
-    """Blocking warmup — runs in a thread so it doesn't block app startup."""
+def _connect_and_prepare() -> duckdb.DuckDBPyConnection:
     from .db import VIEWS  # noqa: PLC0415
-    try:
-        conn = duckdb.connect(_db_path())
-        for view_sql in VIEWS:
-            try:
-                conn.execute(view_sql)
-            except Exception:
-                pass
-        conn.close()
-    except Exception:
-        pass  # warmup failure is non-fatal; first real request pays the cold-connect cost
+    conn = duckdb.connect(_db_path())
+    for view_sql in VIEWS:
+        try:
+            conn.execute(view_sql)
+        except Exception:
+            pass
+    return conn
+
+
+def _refresh_once(conn: duckdb.DuckDBPyConnection) -> None:
+    now = time.monotonic()
+    _cache["all_stats"] = (now, _queries().get_dashboard_stats(conn))
+    _cache["summary"] = (now, _queries().get_run_summary(conn))
+    _cache["recent"] = (now, _queries().get_recent_observations(conn))
+
+
+async def _refresh_loop():
+    """Proactively keep the home-page cache entries warm.
+
+    get_dashboard_stats issues ~8 separate queries against MotherDuck and
+    costs ~1-1.5s end to end (MotherDuck per-query overhead, not raw network
+    RTT — a trivial `SELECT 1` returns in ~1ms). Refreshing here, off the
+    request path, means page loads always hit the in-memory cache instead of
+    occasionally blocking on a cold query right after TTL expiry.
+    """
+    conn = None
+    while True:
+        try:
+            if conn is None:
+                conn = await asyncio.to_thread(_connect_and_prepare)
+            await asyncio.to_thread(_refresh_once, conn)
+        except Exception:
+            conn = None  # force reconnect + view recreation next iteration
+        await asyncio.sleep(20)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Run warmup in a background thread so the app starts accepting requests
+    # Scheduled (not awaited) so the app starts accepting requests
     # (including Railway's healthcheck on /api/health) immediately.
-    asyncio.create_task(asyncio.to_thread(_warmup))
+    task = asyncio.create_task(_refresh_loop())
     yield
+    task.cancel()
 
 
 app = FastAPI(title="Civic Web Index", version="0.1.0", lifespan=lifespan)
