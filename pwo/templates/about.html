@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}About — Civic Web Index{% endblock %}
+{% block meta %}
+<meta name="description" content="Civic Web Index is a systematic, public, machine-readable index of the digital infrastructure supporting the American civic sector.">
+{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://civicwebindex.org/about">{% endblock %}
+
+{% block content %}
+<div class="methods-body">
+  <h2>About Civic Web Index</h2>
+  <p>Nonprofits and government agencies are the backbone of American civic life. They deliver healthcare, education, housing assistance, emergency services, and democratic infrastructure to every community in the country. The web is how most people access them.</p>
+
+  <p style="margin-top:1rem">So who's checking whether those websites are actually working?</p>
+
+  <p style="margin-top:1rem">Civic Web Index is a systematic, public, machine-readable index of the digital infrastructure supporting the American civic sector. We crawl government and nonprofit domains — checking availability, HTTPS security posture, hosting providers, technology stacks, and basic accessibility signals — and make the results freely available.</p>
+
+  <h3>Why it matters</h3>
+  <p>A city government website that's down means a resident can't pay a bill or find a service. A nonprofit site without HTTPS is a security risk for every visitor. An inaccessible site excludes the people those organizations exist to serve. These aren't edge cases — they're systemic, measurable, and largely invisible without a project like this.</p>
+
+  <h3>Who it's for</h3>
+  <ul style="margin-top:.5rem">
+    <li><strong>Journalists</strong> investigating digital equity, government accountability, or civic tech.</li>
+    <li><strong>Policy researchers</strong> studying public sector digital infrastructure.</li>
+    <li><strong>Web teams</strong> at nonprofits and agencies who want to benchmark against peers.</li>
+    <li><strong>Funders</strong> assessing the digital health of the organizations they support.</li>
+    <li><strong>Advocates</strong> making the case for investment in civic digital infrastructure.</li>
+  </ul>
+
+  <h3>What we don't do</h3>
+  <p>We don't score or rank organizations. We don't claim a low score means failure — organizations operate under real resource constraints. We publish raw, verifiable observations and let you draw your own conclusions.</p>
+
+  <h3>Coverage</h3>
+  <p>Current dataset covers {{ total | format_int }} domains: federal, state, and local government from the CISA .gov registry, and nonprofits from IRS 990 filings. Coverage grows with each crawl cycle.</p>
+
+  <h3>Get in touch</h3>
+  <p>Questions, corrections, or press inquiries: <a href="mailto:hello@civicwebindex.org" style="color:var(--black)">hello@civicwebindex.org</a></p>
+</div>
+{% endblock %}

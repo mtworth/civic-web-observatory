@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Browse — Civic Web Index{% endblock %}
+{% block meta %}
+<meta name="description" content="Search and filter {{ total | format_int }} government and nonprofit domains by status, entity type, and state.">
+{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://civicwebindex.org/browse">{% endblock %}
+
+{% block content %}
+<div class="browse">
+
+  <form class="filter-bar" method="get" action="/browse">
+    <input class="filter-input" type="text" name="search" value="{{ filters.search or '' }}" placeholder="Search domains or organizations…">
+    <select class="filter-select" name="org_type" onchange="this.form.submit()">
+      <option value="">All entity types</option>
+      {% for t in org_types %}
+      <option value="{{ t.org_type }}" {{ 'selected' if filters.org_type == t.org_type }}>{{ t.org_type }} ({{ t.count | format_int }})</option>
+      {% endfor %}
+    </select>
+    <select class="filter-select" name="status" onchange="this.form.submit()">
+      <option value="">All statuses</option>
+      {% for s in statuses %}
+      <option value="{{ s.status }}" {{ 'selected' if filters.status == s.status }}>{{ s.status }} ({{ s.count | format_int }})</option>
+      {% endfor %}
+    </select>
+    <select class="filter-select" name="state" onchange="this.form.submit()">
+      <option value="">All states</option>
+      {% for s in states %}
+      <option value="{{ s.state }}" {{ 'selected' if filters.state == s.state }}>{{ s.state }} ({{ s.count | format_int }})</option>
+      {% endfor %}
+    </select>
+    <button class="btn-ghost" type="submit" style="font-size:13px">Search</button>
+    <span class="filter-count">{{ total | format_int }} domains</span>
+  </form>
+
+  <div class="browse-table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Domain / Organization</th>
+        <th>Type</th>
+        <th>State</th>
+        <th>Hosting</th>
+        <th>HTTPS / TLS</th>
+        <th>Files</th>
+        <th style="text-align:right">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if items %}
+      {% for d in items %}
+      <tr>
+        <td>
+          <a class="td-domain" href="/domains/{{ d.domain | urlquote }}">{{ d.domain }}</a>
+          {% if d.org_name %}<div class="td-org">{{ d.org_name }}</div>{% endif %}
+        </td>
+        <td class="td-mono">{{ d.org_type or '—' }}</td>
+        <td class="td-mono">{{ d.state or '—' }}</td>
+        <td class="td-mono">{{ d.nameserver_provider_hint or 'unknown' }}</td>
+        <td class="td-mono">{{ 'valid' if d.tls_valid else 'invalid' if d.https_available else 'no https' }}</td>
+        <td class="td-files">
+          <span class="{{ 'on' if d.robots_txt_available else 'off' }}" title="robots.txt">robots.txt</span>
+          <span class="{{ 'on' if d.sitemap_xml_available else 'off' }}" title="sitemap.xml">sitemap.xml</span>
+          <span class="{{ 'on' if d.llms_txt_available else 'off' }}" title="llms.txt">llms.txt</span>
+        </td>
+        <td class="td-status {{ 's-ok' if d.collection_status == 'ok' else ('s-blocked' if d.homepage_block_type and d.homepage_block_type != 'none' else 's-failed') }}">{{ d.collection_status }}</td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr class="empty-row"><td colspan="7">No domains match these filters.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+  </div>
+
+  <div class="table-foot">
+    <span class="page-count">Showing {{ range_start | format_int }}&ndash;{{ range_end | format_int }} of {{ total | format_int }}</span>
+    <div class="page-btns">
+      <a class="page-btn {{ 'disabled' if offset == 0 }}" href="{{ prev_url }}">&larr; Prev</a>
+      <a class="page-btn {{ 'disabled' if range_end >= total }}" href="{{ next_url }}">Next &rarr;</a>
+    </div>
+  </div>
+
+  <div class="browse-nav">
+    <div>
+      <div class="bnav-label">Browse by state</div>
+      <div class="state-grid">
+        {% for s in states %}
+        <a class="state-btn {{ 'active' if filters.state == s.state }}" href="/browse?state={{ s.state | urlquote }}">{{ s.state }}<sup>{{ s.count }}</sup></a>
+        {% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="bnav-label">Browse by entity type</div>
+      <div class="sector-list">
+        {% for t in org_types %}
+        <a class="sector-btn {{ 'active' if filters.org_type == t.org_type }}" href="/browse?org_type={{ t.org_type | urlquote }}">{{ t.org_type }}<span>{{ t.count }}</span></a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

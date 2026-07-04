@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode, quote
 
 import duckdb
 from dotenv import load_dotenv
@@ -20,6 +21,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters["format_int"] = lambda v: f"{int(v):,}" if v is not None else "0"
+templates.env.filters["urlquote"] = lambda v: quote(str(v), safe="")
 
 # Simple TTL cache for aggregate stats endpoints. Stats only change when a
 # crawl finishes, so 60s staleness is fine and avoids repeated MotherDuck
@@ -130,17 +132,147 @@ app.add_middleware(
 )
 
 
+def _fmt_date(iso: str | None) -> str:
+    if not iso:
+        return "unknown"
+    try:
+        dt = datetime.fromisoformat(iso)
+    except ValueError:
+        return "unknown"
+    return dt.strftime("%B %-d, %Y") if os.name != "nt" else dt.strftime("%B %#d, %Y")
+
+
+def _footer_note(summary: dict) -> str | None:
+    checked = summary.get("dataset_last_checked_at")
+    return f"Last observation {_fmt_date(checked)}" if checked else None
+
+
+_BLOCKED_STATUSES = {"captcha", "bot_challenge", "blocked_by_cdn", "http_403", "http_429"}
+
+
+def _signal_for(d: dict) -> tuple[str, str]:
+    block_type = d.get("homepage_block_type")
+    if block_type and block_type != "none":
+        return f"blocked · {block_type.replace('_', ' ')}", "warn"
+    expiry = d.get("tls_days_until_expiry")
+    if expiry is not None and expiry < 30:
+        return f"TLS expires in {expiry}d", "warn"
+    if d.get("llms_txt_available"):
+        return "serves llms.txt", "ok"
+    technologies = d.get("technologies") or []
+    if technologies:
+        return " · ".join(technologies[:2]), ""
+    if d.get("dns_resolves") is False:
+        return "DNS not resolving", "fail"
+    if d.get("https_available") and d.get("tls_valid"):
+        return "HTTPS · valid TLS", "ok"
+    if d.get("https_available") and not d.get("tls_valid"):
+        return "HTTPS · invalid TLS", "warn"
+    return d.get("collection_status") or "checked", ""
+
+
+def _time_ago(iso: str | None) -> str:
+    if not iso:
+        return ""
+    try:
+        dt = datetime.fromisoformat(iso)
+    except ValueError:
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    diff = int((datetime.now(timezone.utc) - dt).total_seconds())
+    if diff < 60:
+        return f"{diff}s ago"
+    if diff < 3600:
+        return f"{diff // 60}m ago"
+    if diff < 86400:
+        return f"{diff // 3600}h ago"
+    return f"{diff // 86400}d ago"
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "0.1.0"}
 
 
-@app.get("/")
-def root():
-    index_path = STATIC_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(index_path)
-    return {"status": "ok", "version": "0.1.0"}
+@app.get("/", response_class=HTMLResponse)
+def root(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    summary = _cached("summary", lambda: _queries().get_run_summary(conn))
+    recent = _cached("recent", lambda: _queries().get_recent_observations(conn))
+    for d in recent:
+        d["signal_text"], d["signal_cls"] = _signal_for(d)
+        d["time_ago"] = _time_ago(d.get("checked_at"))
+    return templates.TemplateResponse(request=request, name="home.html", context={
+        "active": "home",
+        "total": summary.get("dataset_domains_total", 0),
+        "recent": recent[:8],
+        "footer_note": _footer_note(summary),
+    })
+
+
+@app.get("/browse", response_class=HTMLResponse)
+def browse_page(
+    request: Request,
+    conn: duckdb.DuckDBPyConnection = Depends(get_db),
+    search: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    org_type: str | None = Query(default=None),
+    state: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+):
+    limit = 25
+    offset = (page - 1) * limit
+    result = _queries().list_domains(
+        conn, limit=limit, offset=offset,
+        status=status or None, org_type=org_type or None,
+        state=state or None, search=search or None,
+    )
+    stats = _cached("all_stats", lambda: _queries().get_dashboard_stats(conn))
+    summary = _cached("summary", lambda: _queries().get_run_summary(conn))
+
+    total = result["total"]
+    range_start = offset + 1 if total else 0
+    range_end = min(offset + limit, total)
+
+    def page_url(target_page: int) -> str:
+        params = {"search": search, "status": status, "org_type": org_type, "state": state, "page": target_page}
+        qs = urlencode({k: v for k, v in params.items() if v})
+        return f"/browse?{qs}"
+
+    return templates.TemplateResponse(request=request, name="browse.html", context={
+        "active": "browse",
+        "items": result["items"],
+        "total": total,
+        "offset": offset,
+        "range_start": range_start,
+        "range_end": range_end,
+        "prev_url": page_url(max(1, page - 1)),
+        "next_url": page_url(page + 1),
+        "filters": {"search": search, "status": status, "org_type": org_type, "state": state},
+        "states": stats.get("states", []),
+        "org_types": stats.get("orgTypes", []),
+        "statuses": stats.get("status", []),
+        "footer_note": _footer_note(summary),
+    })
+
+
+@app.get("/about", response_class=HTMLResponse)
+def about_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    summary = _cached("summary", lambda: _queries().get_run_summary(conn))
+    return templates.TemplateResponse(request=request, name="about.html", context={
+        "active": "about",
+        "total": summary.get("dataset_domains_total", 0),
+        "footer_note": _footer_note(summary),
+    })
+
+
+@app.get("/methods", response_class=HTMLResponse)
+def methods_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    summary = _cached("summary", lambda: _queries().get_run_summary(conn))
+    return templates.TemplateResponse(request=request, name="methods.html", context={
+        "active": "methods",
+        "footer_note": _footer_note(summary),
+    })
 
 
 @app.get("/domains/{domain}", response_class=HTMLResponse)
@@ -148,25 +280,29 @@ def domain_page(request: Request, domain: str, conn: duckdb.DuckDBPyConnection =
     result = _queries().get_domain(conn, domain)
     if result is None:
         raise HTTPException(status_code=404, detail=f"Domain '{domain}' not found")
-    checked_at = result.get("checked_at") or ""
-    if checked_at:
-        try:
-            dt = datetime.fromisoformat(checked_at)
-            checked_at = dt.strftime("%-d %B %Y")
-        except Exception:
-            pass
-    return templates.TemplateResponse(request=request, name="domain.html", context={"d": result, "checked_at": checked_at})
+    checked_at = _fmt_date(result.get("checked_at"))
+    history = list(reversed(_queries().get_domain_history(conn, domain)))
+    for h in history:
+        h["checked_at_fmt"] = _fmt_date(h.get("checked_at"))
+    summary = _cached("summary", lambda: _queries().get_run_summary(conn))
+    return templates.TemplateResponse(request=request, name="domain.html", context={
+        "d": result,
+        "checked_at": checked_at,
+        "history": history,
+        "footer_note": _footer_note(summary),
+    })
 
 
 @app.get("/insights", response_class=HTMLResponse)
 def insights_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
     stats = _cached("all_stats", lambda: _queries().get_dashboard_stats(conn))
+    summary = _cached("summary", lambda: _queries().get_run_summary(conn))
     total = stats.get("total", 0)
     status = stats.get("status", [])
-    blocked_statuses = {"captcha", "bot_challenge", "blocked_by_cdn", "http_403", "http_429"}
     ok_count = sum(s["count"] for s in status if s["status"] == "ok")
-    blocked_count = sum(s["count"] for s in status if s["status"] in blocked_statuses)
+    blocked_count = sum(s["count"] for s in status if s["status"] in _BLOCKED_STATUSES)
     return templates.TemplateResponse(request=request, name="insights.html", context={
+        "active": "insights",
         "total": total,
         "ok_count": ok_count,
         "blocked_count": blocked_count,
@@ -178,6 +314,7 @@ def insights_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(ge
         "hosting": stats.get("hosting", []),
         "blocking": stats.get("blocking", []),
         "technologies": stats.get("technologies", []),
+        "footer_note": _footer_note(summary),
     })
 
 

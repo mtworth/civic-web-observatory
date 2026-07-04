@@ -1,31 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ d.domain }} — Civic Web Index</title>
+{% extends "base.html" %}
+
+{% block title %}{{ d.domain }} — Civic Web Index{% endblock %}
+{% block meta %}
 <meta name="description" content="Web infrastructure signals for {{ d.domain }}{% if d.org_name %} ({{ d.org_name }}){% endif %}: HTTPS status, TLS certificate, hosting, technology stack, and accessibility as of {{ checked_at }}.">
-<link rel="canonical" href="https://civicwebindex.org/domains/{{ d.domain }}">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css">
+{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://civicwebindex.org/domains/{{ d.domain }}">{% endblock %}
+{% block extra_head %}
 <style>
-a { color: inherit; }
 .tech-list { display: flex; flex-wrap: wrap; gap: .4rem; }
 .tech-tag { font-family: var(--mono); font-size: 11px; background: var(--gray-1); padding: .2rem .5rem; border-radius: 2px; }
-.cta { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-2); font-size: 13px; color: var(--gray-3); }
-.cta a { color: var(--black); }
 </style>
-</head>
-<body>
+{% endblock %}
 
-<div class="site-header">
-  <a class="wordmark" href="/">Civic Web Index</a>
-  <nav><a href="/" style="font-size:13px;color:var(--gray-3);text-decoration:none">← All domains</a></nav>
-</div>
-<hr class="header-rule">
-
+{% block content %}
 <div class="domain-profile">
-  <a class="domain-back" href="/">← Back to browse</a>
+  <a class="domain-back" href="/browse">&larr; Back to browse</a>
 
   <div class="domain-header">
     <div class="domain-name">{{ d.domain }}</div>
@@ -91,15 +80,32 @@ a { color: inherit; }
     {% endif %}
   </div>
 
-  <div class="cta">
-    View full interactive profile and history at <a href="/">civicwebindex.org</a>.
-    Data updated via automated crawl; last observation {{ checked_at }}.
-  </div>
+  {% if history %}
+  <div class="insight-panel-title">History ({{ history | length }} run{{ 's' if history | length != 1 else '' }})</div>
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>Checked</th><th>Status</th><th>HTTP code</th><th>HTTPS/TLS</th><th>Files</th><th>Hosting</th><th>Response</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in history %}
+      <tr>
+        <td class="td-mono">{{ h.checked_at_fmt }}</td>
+        <td class="td-status {{ 's-ok' if h.collection_status == 'ok' else ('s-blocked' if h.homepage_block_type and h.homepage_block_type != 'none' else 's-failed') }}">{{ h.collection_status }}</td>
+        <td class="td-mono">{{ h.homepage_status_code if h.homepage_status_code is not none else '—' }}</td>
+        <td class="td-mono">{{ 'valid' if h.tls_valid else 'invalid' if h.https_available else 'no https' }}</td>
+        <td class="td-files">
+          <span class="{{ 'on' if h.robots_txt_available else 'off' }}" title="robots.txt">robots.txt</span>
+          <span class="{{ 'on' if h.sitemap_xml_available else 'off' }}" title="sitemap.xml">sitemap.xml</span>
+          <span class="{{ 'on' if h.llms_txt_available else 'off' }}" title="llms.txt">llms.txt</span>
+        </td>
+        <td class="td-mono">{{ h.nameserver_provider_hint or '—' }}</td>
+        <td class="td-mono">{{ (h.homepage_response_time_ms | string + 'ms') if h.homepage_response_time_ms is not none else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
 </div>
-
-<footer class="site-footer">
-  <span class="footer-copy">civicwebindex.org</span>
-</footer>
-
-</body>
-</html>
+{% endblock %}

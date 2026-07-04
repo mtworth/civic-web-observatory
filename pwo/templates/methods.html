@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Methodology — Civic Web Index{% endblock %}
+{% block meta %}
+<meta name="description" content="How Civic Web Index crawls, what it measures, and what it deliberately does not do.">
+{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://civicwebindex.org/methods">{% endblock %}
+
+{% block content %}
+<div class="methods-body">
+  <h2>Methodology</h2>
+  <p>Civic Web Index performs lightweight, transparent, homepage-only checks of public-interest websites. It records availability, machine-readability, hosting/DNS hints, and automated accessibility signals. It does not bypass bot protections, crawl private areas, or perform vulnerability scanning.</p>
+
+  <h3>What gets crawled</h3>
+  <p>For each domain, the crawler requests only: the homepage over HTTPS and HTTP, <code>/robots.txt</code>, <code>/sitemap.xml</code>, and <code>/llms.txt</code>. No deeper links are followed.</p>
+
+  <h3>Crawler identity</h3>
+  <p>Every request identifies itself with a transparent User-Agent:</p>
+  <p><code>CivicWebIndexBot/0.1 (+https://civicwebindex.org/bot; contact: hello@civicwebindex.org)</code></p>
+
+  <h3>What it does not do</h3>
+  <ul>
+    <li>No proxy rotation or fake browser fingerprinting</li>
+    <li>No CAPTCHA solving or bot-challenge evasion</li>
+    <li>No login attempts or admin path probing</li>
+    <li>No aggressive retries; blocks are recorded, not bypassed</li>
+  </ul>
+
+  <h3>Scoring</h3>
+  <p>Raw observations only. This dataset deliberately avoids collapsing signals into a single opaque score. Every field shown (HTTPS validity, TLS issuer, missing alt text, etc.) is a direct, individually verifiable fact about the domain at the time it was checked.</p>
+
+  <h3>Data sources</h3>
+  <p>This dataset covers government domains from the CISA <code>.gov</code> registry (<a href="https://github.com/cisagov/dotgov-data" style="color:var(--gray-4)">cisagov/dotgov-data</a>) and nonprofit domains from IRS 990 filings. Coverage expands over time.</p>
+
+  <h2 style="margin-top:3rem">Metric glossary</h2>
+  <p>Every signal is a direct observation from a single homepage request. No inference, no scoring.</p>
+
+  <table class="glossary-table">
+    <thead>
+      <tr><th>Metric</th><th>Category</th><th>What it measures</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Collection status</td><td>Availability</td><td><strong>ok</strong> — 2xx/3xx response. <strong>dns_failed</strong> — domain did not resolve. <strong>http_error</strong> — 4xx/5xx. <strong>captcha / bot_challenge / blocked_by_cdn / http_403 / http_429</strong> — bot-protection detected and recorded without bypass.</td></tr>
+      <tr><td>Block type</td><td>Availability</td><td>Specific blocking mechanism: CAPTCHA, Cloudflare/CDN challenge, 403 Forbidden, or 429 Too Many Requests.</td></tr>
+      <tr><td>Status code</td><td>Availability</td><td>Final HTTP status code after following all redirects.</td></tr>
+      <tr><td>Response time</td><td>Availability</td><td>Milliseconds from TCP connection open to complete response body, with a 10-second timeout.</td></tr>
+      <tr><td>HTTPS available</td><td>HTTPS / TLS</td><td>Whether the domain served a valid response over <code>https://</code>. Does not require a valid certificate.</td></tr>
+      <tr><td>HTTP redirects to HTTPS</td><td>HTTPS / TLS</td><td>Whether a plain <code>http://</code> request is redirected to <code>https://</code> before content is served.</td></tr>
+      <tr><td>TLS valid</td><td>HTTPS / TLS</td><td>Certificate chain is trusted, hostname matches, and cert has not expired — verified by Python's <code>ssl</code> module.</td></tr>
+      <tr><td>TLS issuer</td><td>HTTPS / TLS</td><td>Organization name from the certificate's issuer field (e.g. Let's Encrypt, DigiCert).</td></tr>
+      <tr><td>TLS days until expiry</td><td>HTTPS / TLS</td><td>Calendar days until the certificate's <code>notAfter</code> date. Values under 30 are flagged.</td></tr>
+      <tr><td>Primary IP</td><td>DNS / Hosting</td><td>First A record returned by DNS resolution of the bare domain.</td></tr>
+      <tr><td>ASN / ASN org</td><td>DNS / Hosting</td><td>Autonomous System Number and registered organization for the primary IP. Indicates network owner (Amazon, Cloudflare, a university, etc.).</td></tr>
+      <tr><td>Nameserver hint</td><td>DNS / Hosting</td><td>Hosting or DNS provider inferred from NS record patterns. "unknown" if no pattern matches.</td></tr>
+      <tr><td>CNAME hint</td><td>DNS / Hosting</td><td>CDN or platform inferred from CNAME records.</td></tr>
+      <tr><td>robots.txt</td><td>Files</td><td>Whether <code>/robots.txt</code> returned a 200 response with non-empty body. Allow/disallow rules are parsed.</td></tr>
+      <tr><td>sitemap.xml</td><td>Files</td><td>Whether <code>/sitemap.xml</code> returned a 200 response. Content is not parsed beyond detection.</td></tr>
+      <tr><td>llms.txt</td><td>Files</td><td>Whether <code>/llms.txt</code> returned a 200 response. An emerging convention for AI-indexing preferences (<a href="https://llmstxt.org" style="color:var(--gray-4)">llmstxt.org</a>).</td></tr>
+      <tr><td>Technologies detected</td><td>Technology</td><td>CMS, analytics, CDN, JS frameworks, and server languages identified by 7,600+ Wappalyzer fingerprints matched against HTML, headers, and script URLs. Probabilistic — a match indicates strong evidence, not certainty.</td></tr>
+      <tr><td>Has page title</td><td>Accessibility</td><td>Whether the HTML <code>&lt;title&gt;</code> element is present and non-empty.</td></tr>
+      <tr><td>Has html lang</td><td>Accessibility</td><td>Whether the <code>&lt;html&gt;</code> element carries a <code>lang</code> attribute. Required for screen readers to select the correct language engine.</td></tr>
+      <tr><td>Has main landmark</td><td>Accessibility</td><td>Whether a <code>&lt;main&gt;</code> element or <code>role="main"</code> is present. Helps assistive technology skip to primary content.</td></tr>
+      <tr><td>Has nav landmark</td><td>Accessibility</td><td>Whether a <code>&lt;nav&gt;</code> element or <code>role="navigation"</code> is present.</td></tr>
+      <tr><td>Images missing alt</td><td>Accessibility</td><td>Count of <code>&lt;img&gt;</code> elements without an <code>alt</code> attribute. Averaged across domains in aggregate views.</td></tr>
+      <tr><td>Inputs missing labels</td><td>Accessibility</td><td>Count of <code>&lt;input&gt;</code> elements not associated with a <code>&lt;label&gt;</code>. Averaged across domains.</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

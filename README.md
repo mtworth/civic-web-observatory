@@ -6,6 +6,18 @@ Live database: ~19,000 observations across 17,000 domains, growing via periodic 
 
 ---
 
+## Frontend architecture principles
+
+The frontend is **fully server-rendered** — FastAPI + Jinja2 templates, no client-side rendering framework, no build step.
+
+- **Every page is rendered server-side with data already baked in.** Routes fetch from the cache/DB and pass plain dicts/lists into a Jinja template; the response is complete HTML. There is no client-side fetch-then-render step for page content — the numbers are there on first paint.
+- **Filtering, search, and pagination are plain HTML forms and links**, not JS state. `/browse?search=...&status=...&state=...&page=...` is a real URL with real query params, driving a real `list_domains()` call server-side. A page reload for a filter change is an acceptable, simple trade — not a regression to work around.
+- **Light interactivity is vanilla JS, htmx, or Alpine — never a SPA framework.** If something genuinely benefits from not reloading the page (a debounced search-as-you-type, a toggle), reach for the smallest tool that does that one thing, scoped to that one widget. Don't reintroduce a client-side render pipeline to get there.
+- **Keep it as simple as possible.** One shared `base.html` layout, one route per page, plain dicts as template context. No API layer between the page and the database beyond what `pwo/queries.py` already provides.
+- **The `/api/*` JSON endpoints exist for external consumers**, not to power the frontend. Don't make a page route call an `/api/*` endpoint over HTTP — call the query function directly.
+
+---
+
 ## What it measures
 
 Each domain gets one row per crawl run (`observations` table). The `v_current` view deduplicates to the latest snapshot per domain.
@@ -29,12 +41,12 @@ Each domain gets one row per crawl run (`observations` table). The `v_current` v
 
 ```
 pwo/
-  api.py              FastAPI app — all read endpoints, per-request DuckDB connections
+  api.py              FastAPI app — page routes (SSR) + /api/* JSON endpoints, per-request DuckDB connections
   cli.py              Click CLI — `pwo crawl`, `pwo dotgov`, `pwo serve`
   crawler.py          Async orchestrator — runs all checks per domain concurrently
   models.py           Pydantic DomainObservation (single source of truth for schema)
   db.py               DuckDB schema, migrations, views, insert/summary helpers
-  queries.py          All read queries used by the API
+  queries.py          All read queries — called directly by page routes and by /api/*
   config.py           Config dataclass (concurrency, timeout, db_path, etc.)
 
   http_checks.py      Homepage fetch, redirect following, WAF/block detection, UA retry
@@ -52,8 +64,16 @@ pwo/
   dotgov.py           Fetches live CISA .gov domain list
 
   fingerprints/       27 JSON files from enthec/webappanalyzer (7,646 technology patterns)
+  templates/
+    base.html         Shared layout — header, nav, footer; every page extends this
+    home.html         / — hero stats + recent observations feed
+    browse.html       /browse — server-side filtered, paginated domain table
+    insights.html     /insights — aggregate stat panels
+    domain.html       /domains/{domain} — single domain profile + history
+    about.html        /about
+    methods.html      /methods — methodology + metric glossary
   static/
-    index.html        Single-page frontend (Overview / Browse / Insights / Methods)
+    style.css         All styling — no CSS framework
     llms.txt          Machine-readable site description
 ```
 
@@ -143,11 +163,21 @@ pwo serve
 # → http://localhost:8000
 ```
 
-**Endpoints:**
+**Pages (server-rendered):**
 
 | Endpoint | Description |
 |---|---|
-| `GET /` | Frontend SPA |
+| `GET /` | Overview — hero stats + recent observations |
+| `GET /browse` | Filterable, paginated domain table (`?search=&status=&org_type=&state=&page=`) |
+| `GET /insights` | Aggregate stat panels |
+| `GET /domains/{domain}` | Single domain profile + full crawl history |
+| `GET /about` | About |
+| `GET /methods` | Methodology + metric glossary |
+
+**JSON API** (for external consumers — the pages above call `pwo/queries.py` directly and do not go through these):
+
+| Endpoint | Description |
+|---|---|
 | `GET /api/health` | Version check |
 | `GET /api/summary` | Most recent run metadata + dataset totals |
 | `GET /api/stats` | **All dashboard stats in one request** — https, tls, files, a11y, status, hosting, blocking, technologies, states, orgTypes |
@@ -235,9 +265,9 @@ When the initial fetch is blocked, the crawler classifies it and optionally retr
 
 ## Scheduled crawls (GitHub Actions)
 
-The workflow at `.github/workflows/crawl.yml` runs daily at 6am UTC and crawls ~10,600 domains — one deterministic 1/30th slice of the seed dataset. Every domain is visited once per 30-day window.
+The workflow at `.github/workflows/crawl.yml` runs daily at 6am UTC and crawls one deterministic 1/90th slice of the seed dataset. Every domain is visited once per 90-day window.
 
-**Sampling strategy:** `SHA-256(domain) % 30 == today.toordinal() % 30` — stable across Python versions, even distribution (10,453–10,833 domains/bucket), no state required.
+**Sampling strategy:** `SHA-256(domain) % 90 == today.toordinal() % 90` — stable across Python versions, even distribution, no state required.
 
 **Setup:**
 
@@ -245,7 +275,7 @@ The workflow at `.github/workflows/crawl.yml` runs daily at 6am UTC and crawls ~
 2. Enable Actions on the repo if not already on
 3. The first scheduled run will fire at 6am UTC the next day
 
-**Manual trigger:** Go to Actions → Daily Crawl → Run workflow. You can optionally override the bucket (0–29) to re-crawl a specific day's slice, or enable dry run to just print the domain count.
+**Manual trigger:** Go to Actions → Daily Crawl → Run workflow. You can optionally override the bucket (0–89) to re-crawl a specific day's slice, or enable dry run to just print the domain count.
 
 **Runtime:** ~45–65 minutes/day at concurrency 25. Uses ~1,350–1,950 of GitHub's 2,000 free minutes/month (public repo).
 

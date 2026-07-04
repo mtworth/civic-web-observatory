@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Civic Web Index{% endblock %}
+{% block meta %}
+<meta name="description" content="Mapping the digital infrastructure of the American civic web — HTTPS, hosting, accessibility, and more across {{ total | format_int }} government and nonprofit domains.">
+{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://civicwebindex.org/">{% endblock %}
+
+{% block content %}
+<div class="landing">
+
+  <div class="landing-hero">
+    <h1>Mapping the <strong>digital infrastructure</strong> of the American civic web</h1>
+    <p class="landing-meta">
+      Tracking availability, security posture, hosting, and accessibility across
+      <strong>{{ total | format_int }}</strong> government and nonprofit domains. Updated daily.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="/browse">Browse domains</a>
+      <a class="btn-ghost" href="/insights">View insights &rarr;</a>
+    </div>
+  </div>
+
+  <div class="feed-section">
+    <div class="feed-eyebrow"><span class="feed-dot"></span> Recent observations</div>
+    <ul class="feed-list">
+      {% for d in recent %}
+      <li class="feed-item">
+        <a href="/domains/{{ d.domain | urlquote }}">
+          <span class="feed-domain">{{ d.domain }}</span>
+          <span class="feed-signal {{ d.signal_cls }}">{{ d.signal_text }}</span>
+          <span class="feed-age">{{ d.time_ago }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+</div>
+{% endblock %}
