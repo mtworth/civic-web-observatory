@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Reports — Civic Web Index{% endblock %}
+{% block meta %}
+<meta name="description" content="Hand-written analysis and thought leadership on the state of the American civic web.">
+{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://civicwebindex.org/reports">{% endblock %}
+
+{% block content %}
+<div class="methods-body">
+  <h2>Reports</h2>
+  <p>Analysis and thought leadership on the digital infrastructure of the American civic web — written, not generated. For self-service dashboards, see <a href="/insights" style="color:var(--black)">Insights</a>.</p>
+
+  <div class="report-list">
+    {% if reports %}
+    {% for r in reports %}
+    <a class="report-card" href="/reports/{{ r.slug }}">
+      <div class="report-date">{{ r.date }}</div>
+      <div class="report-title">{{ r.title }}</div>
+      <div class="report-summary">{{ r.summary }}</div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <p style="color:var(--gray-3)">No reports published yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

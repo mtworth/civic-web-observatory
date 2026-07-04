@@ -14,7 +14,7 @@ load_dotenv()
 from fastapi import FastAPI, Query, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -63,8 +63,9 @@ def get_db():
     MotherDuck handles concurrent reads natively.
 
     After the first connect() call, DuckDB's MotherDuck extension keeps an
-    internal process-level session, so subsequent opens cost ~0ms. The
-    background refresh loop below establishes that session at startup.
+    internal process-level session, so subsequent opens cost ~0ms. Startup
+    (see lifespan below) makes that first call so the very first real
+    request doesn't pay for it.
     """
     path = _db_path()
     read_only = not path.startswith("md:")
@@ -86,40 +87,23 @@ def _connect_and_prepare() -> duckdb.DuckDBPyConnection:
     return conn
 
 
-def _refresh_once(conn: duckdb.DuckDBPyConnection) -> None:
-    now = time.monotonic()
-    _cache["all_stats"] = (now, _queries().get_dashboard_stats(conn))
-    _cache["summary"] = (now, _queries().get_run_summary(conn))
-    _cache["recent"] = (now, _queries().get_recent_observations(conn))
-
-
-async def _refresh_loop():
-    """Proactively keep the home-page cache entries warm.
-
-    get_dashboard_stats issues ~8 separate queries against MotherDuck and
-    costs ~1-1.5s end to end (MotherDuck per-query overhead, not raw network
-    RTT — a trivial `SELECT 1` returns in ~1ms). Refreshing here, off the
-    request path, means page loads always hit the in-memory cache instead of
-    occasionally blocking on a cold query right after TTL expiry.
-    """
-    conn = None
-    while True:
-        try:
-            if conn is None:
-                conn = await asyncio.to_thread(_connect_and_prepare)
-            await asyncio.to_thread(_refresh_once, conn)
-        except Exception:
-            conn = None  # force reconnect + view recreation next iteration
-        await asyncio.sleep(20)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Scheduled (not awaited) so the app starts accepting requests
-    # (including Railway's healthcheck on /api/health) immediately.
-    task = asyncio.create_task(_refresh_loop())
+    """One-time startup: create views/migrations and warm the MotherDuck session.
+
+    Deliberately not a recurring background loop — the `_cached()` helper
+    already lazily recomputes on the first request after each entry's 60s
+    TTL expires, so query cost tracks actual visitor traffic instead of a
+    fixed background poll running 24/7 regardless of whether anyone's
+    visiting (a prior version of this polled MotherDuck every 20s forever,
+    which is a lot of billed compute for zero incremental freshness benefit).
+    """
+    try:
+        conn = await asyncio.to_thread(_connect_and_prepare)
+        conn.close()
+    except Exception:
+        pass
     yield
-    task.cancel()
 
 
 app = FastAPI(title="Civic Web Index", version="0.1.0", lifespan=lifespan)
@@ -266,11 +250,37 @@ def about_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_d
     })
 
 
-@app.get("/methods", response_class=HTMLResponse)
-def methods_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+@app.get("/methods")
+def methods_redirect():
+    """Methods merged into /about; keep old links/bookmarks working."""
+    return RedirectResponse(url="/about", status_code=301)
+
+
+def _reports():
+    """Lazy import so the module loads cleanly before pwo/reports.py exists."""
+    from . import reports  # noqa: PLC0415
+    return reports
+
+
+@app.get("/reports", response_class=HTMLResponse)
+def reports_list_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
     summary = _cached("summary", lambda: _queries().get_run_summary(conn))
-    return templates.TemplateResponse(request=request, name="methods.html", context={
-        "active": "methods",
+    return templates.TemplateResponse(request=request, name="reports.html", context={
+        "active": "reports",
+        "reports": _reports().list_reports(),
+        "footer_note": _footer_note(summary),
+    })
+
+
+@app.get("/reports/{slug}", response_class=HTMLResponse)
+def report_detail_page(request: Request, slug: str, conn: duckdb.DuckDBPyConnection = Depends(get_db)):
+    report = _reports().get_report(slug)
+    if report is None:
+        raise HTTPException(status_code=404, detail=f"Report '{slug}' not found")
+    summary = _cached("summary", lambda: _queries().get_run_summary(conn))
+    return templates.TemplateResponse(request=request, name="report.html", context={
+        "active": "reports",
+        "report": report,
         "footer_note": _footer_note(summary),
     })
 
@@ -346,7 +356,13 @@ def sitemap(conn: duckdb.DuckDBPyConnection = Depends(get_db)):
     rows = conn.execute("SELECT domain FROM v_current ORDER BY domain").fetchall()
     urls = [
         f"  <url><loc>{base}/</loc><changefreq>daily</changefreq></url>",
+        f"  <url><loc>{base}/browse</loc><changefreq>daily</changefreq></url>",
         f"  <url><loc>{base}/insights</loc><changefreq>daily</changefreq></url>",
+        f"  <url><loc>{base}/reports</loc><changefreq>weekly</changefreq></url>",
+        f"  <url><loc>{base}/about</loc><changefreq>monthly</changefreq></url>",
+    ] + [
+        f"  <url><loc>{base}/reports/{r.slug}</loc><changefreq>never</changefreq></url>"
+        for r in _reports().list_reports()
     ] + [
         f"  <url><loc>{base}/domains/{row[0]}</loc><changefreq>monthly</changefreq></url>"
         for row in rows

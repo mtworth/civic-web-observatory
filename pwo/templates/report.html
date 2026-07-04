@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}{{ report.title }} — Civic Web Index{% endblock %}
+{% block meta %}
+<meta name="description" content="{{ report.summary }}">
+{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://civicwebindex.org/reports/{{ report.slug }}">{% endblock %}
+
+{% block content %}
+<div class="methods-body">
+  <a class="domain-back" href="/reports">&larr; Back to reports</a>
+  <div class="report-date" style="margin-top:1.5rem">{{ report.date }}</div>
+  <h2>{{ report.title }}</h2>
+  <div class="report-body">{{ report.body_html | safe }}</div>
+</div>
+{% endblock %}

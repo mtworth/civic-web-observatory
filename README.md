@@ -62,19 +62,24 @@ pwo/
   build_seed.py       Builds outputs/seed_domains.csv from CISA .gov + IRS 990 nonprofits
   extract_990_domains.py  Streams IRS 990 ZIPs from Cloudflare R2, extracts WebsiteAddressTxt
   dotgov.py           Fetches live CISA .gov domain list
+  reports.py          Loads hand-written markdown reports from reports/posts/ (no CMS, no DB table)
 
   fingerprints/       27 JSON files from enthec/webappanalyzer (7,646 technology patterns)
   templates/
     base.html         Shared layout — header, nav, footer; every page extends this
-    home.html         / — hero stats + recent observations feed
+    home.html         / — hero stats + recent observations feed (not a nav item; reached via wordmark)
     browse.html       /browse — server-side filtered, paginated domain table
     insights.html     /insights — aggregate stat panels
+    reports.html      /reports — list of hand-written analysis posts
+    report.html       /reports/{slug} — single report
     domain.html       /domains/{domain} — single domain profile + history
-    about.html        /about
-    methods.html      /methods — methodology + metric glossary
+    about.html        /about — mission + methodology + metric glossary (merged)
   static/
     style.css         All styling — no CSS framework
     llms.txt          Machine-readable site description
+
+reports/
+  posts/              Markdown files, one per report (frontmatter: title, date, summary)
 ```
 
 ---
@@ -167,12 +172,16 @@ pwo serve
 
 | Endpoint | Description |
 |---|---|
-| `GET /` | Overview — hero stats + recent observations |
+| `GET /` | Hub landing page — hero stats + recent observations feed (not in the nav; reached via the wordmark) |
 | `GET /browse` | Filterable, paginated domain table (`?search=&status=&org_type=&state=&page=`) |
-| `GET /insights` | Aggregate stat panels |
+| `GET /insights` | Aggregate stat panels (self-service dashboard) |
+| `GET /reports` | List of hand-written analysis posts |
+| `GET /reports/{slug}` | Single report |
 | `GET /domains/{domain}` | Single domain profile + full crawl history |
-| `GET /about` | About |
-| `GET /methods` | Methodology + metric glossary |
+| `GET /about` | Mission, methodology, and metric glossary (merged) |
+| `GET /methods` | 301 redirect to `/about` (kept for old links) |
+
+Primary nav is exactly 4 items: Browse, Insights, Reports, About.
 
 **JSON API** (for external consumers — the pages above call `pwo/queries.py` directly and do not go through these):
 

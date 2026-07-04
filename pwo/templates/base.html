@@ -15,11 +15,10 @@
 <div class="site-header">
   <a class="wordmark" href="/">Civic Web Index</a>
   <ul class="site-nav">
-    <li><a href="/" class="{{ 'active' if active == 'home' }}">Overview</a></li>
     <li><a href="/browse" class="{{ 'active' if active == 'browse' }}">Browse</a></li>
     <li><a href="/insights" class="{{ 'active' if active == 'insights' }}">Insights</a></li>
+    <li><a href="/reports" class="{{ 'active' if active == 'reports' }}">Reports</a></li>
     <li><a href="/about" class="{{ 'active' if active == 'about' }}">About</a></li>
-    <li><a href="/methods" class="{{ 'active' if active == 'methods' }}" style="color:var(--gray-3)">Methods</a></li>
   </ul>
 </div>
 <hr class="header-rule">
@@ -29,10 +28,7 @@
 <footer class="site-footer">
   <span class="footer-copy">civicwebindex.org{% if footer_note %} &middot; {{ footer_note }}{% endif %}</span>
   <ul class="footer-links">
-    <li><a href="/about">About</a></li>
-    <li><a href="/methods">Methodology</a></li>
     <li><a href="/llms.txt">llms.txt</a></li>
-    <li><a href="/api/health">API</a></li>
   </ul>
 </footer>
 
