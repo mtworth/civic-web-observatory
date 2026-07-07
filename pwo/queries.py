@@ -607,10 +607,6 @@ def get_org_type_breakdown(conn: duckdb.DuckDBPyConnection) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Accessibility summary
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
 # Technology breakdown
 # ---------------------------------------------------------------------------
 
@@ -689,12 +685,7 @@ def get_accessibility_summary(conn: duckdb.DuckDBPyConnection) -> dict:
                     / NULLIF(COUNT(*) FILTER (WHERE static_a11y_ran = true), 0),
                     1
                 ) AS pct_has_title,
-                ROUND(AVG(a11y_inputs_missing_labels), 2) AS avg_inputs_missing_labels,
-                SUM(axe_violations_critical)  AS axe_violations_critical_total,
-                SUM(axe_violations_serious)   AS axe_violations_serious_total,
-                SUM(axe_violations_moderate)  AS axe_violations_moderate_total,
-                SUM(axe_violations_minor)     AS axe_violations_minor_total,
-                COUNT(*) FILTER (WHERE axe_ran = true) AS axe_scanned
+                ROUND(AVG(a11y_inputs_missing_labels), 2) AS avg_inputs_missing_labels
             FROM v_current
         """)
         row = cur.fetchone()

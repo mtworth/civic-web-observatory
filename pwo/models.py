@@ -101,17 +101,6 @@ class DomainObservation(BaseModel):
     a11y_has_main_landmark: Optional[bool] = None
     a11y_has_nav_landmark: Optional[bool] = None
 
-    # Axe accessibility (stub for V1 test)
-    axe_ran: bool = False
-    axe_error: Optional[str] = None
-    axe_violations_total: Optional[int] = None
-    axe_violations_critical: Optional[int] = None
-    axe_violations_serious: Optional[int] = None
-    axe_violations_moderate: Optional[int] = None
-    axe_violations_minor: Optional[int] = None
-    axe_rule_ids: list[str] = Field(default_factory=list)
-    axe_wcag_tags: list[str] = Field(default_factory=list)
-
     # Technology fingerprinting
     technologies: list[str] = Field(default_factory=list)
 

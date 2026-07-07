@@ -14,7 +14,7 @@ load_dotenv()
 from fastapi import FastAPI, Query, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -248,12 +248,6 @@ def about_page(request: Request, conn: duckdb.DuckDBPyConnection = Depends(get_d
         "total": summary.get("dataset_domains_total", 0),
         "footer_note": _footer_note(summary),
     })
-
-
-@app.get("/methods")
-def methods_redirect():
-    """Methods merged into /about; keep old links/bookmarks working."""
-    return RedirectResponse(url="/about", status_code=301)
 
 
 def _reports():

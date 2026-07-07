@@ -93,16 +93,6 @@ CREATE TABLE IF NOT EXISTS observations (
     a11y_has_main_landmark BOOLEAN,
     a11y_has_nav_landmark BOOLEAN,
 
-    axe_ran BOOLEAN,
-    axe_error VARCHAR,
-    axe_violations_total INTEGER,
-    axe_violations_critical INTEGER,
-    axe_violations_serious INTEGER,
-    axe_violations_moderate INTEGER,
-    axe_violations_minor INTEGER,
-    axe_rule_ids VARCHAR[],
-    axe_wcag_tags VARCHAR[],
-
     is_probably_parked BOOLEAN,
     parked_reason VARCHAR,
     social_only_redirect BOOLEAN,
@@ -274,7 +264,6 @@ CREATE TABLE IF NOT EXISTS run_summary (
     domains_with_sitemap_xml INTEGER,
     domains_with_llms_txt INTEGER,
     domains_with_valid_tls INTEGER,
-    domains_with_axe_scan INTEGER,
     average_response_time_ms DOUBLE,
     crawler_version VARCHAR
 )
@@ -337,14 +326,13 @@ def write_run_summary(
             COUNT(*) FILTER (WHERE sitemap_xml_available = true) AS with_sitemap,
             COUNT(*) FILTER (WHERE llms_txt_available = true) AS with_llms,
             COUNT(*) FILTER (WHERE tls_valid = true) AS with_tls,
-            COUNT(*) FILTER (WHERE axe_ran = true) AS with_axe,
             AVG(homepage_response_time_ms) AS avg_response_ms
         FROM observations
         WHERE run_id = ?
     """, [run_id]).fetchone()
 
     (total, ok, failed, blocked, with_robots, with_sitemap,
-     with_llms, with_tls, with_axe, avg_ms) = summary
+     with_llms, with_tls, avg_ms) = summary
 
     row = {
         "run_id": run_id,
@@ -359,13 +347,12 @@ def write_run_summary(
         "domains_with_sitemap_xml": with_sitemap,
         "domains_with_llms_txt": with_llms,
         "domains_with_valid_tls": with_tls,
-        "domains_with_axe_scan": with_axe,
         "average_response_time_ms": round(avg_ms, 1) if avg_ms else None,
         "crawler_version": crawler_version,
     }
 
-    conn.execute("""
-        INSERT INTO run_summary VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, list(row.values()))
+    cols = ", ".join(row.keys())
+    placeholders = ", ".join(["?" for _ in row])
+    conn.execute(f"INSERT INTO run_summary ({cols}) VALUES ({placeholders})", list(row.values()))
 
     return row

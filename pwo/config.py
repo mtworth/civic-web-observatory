@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 class Config:
     concurrency: int = 10
     timeout: int = 15
-    skip_axe: bool = True
     max_response_bytes: int = 500_000
     crawler_version: str = "0.1.0"
     user_agent: str = (

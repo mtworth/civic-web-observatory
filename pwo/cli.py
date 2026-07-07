@@ -58,16 +58,14 @@ def cli():
 @click.option("--limit", default=1000, show_default=True, help="Max domains to crawl")
 @click.option("--concurrency", default=10, show_default=True)
 @click.option("--timeout", default=15, show_default=True, help="Per-request timeout in seconds")
-@click.option("--skip-axe", is_flag=True, default=True, show_default=True)
 @click.option("--output-dir", default="outputs", show_default=True)
 @click.option("--user-agent", default=None, help="Override the User-Agent string")
 @click.option("--seed", default=42, show_default=True, help="Random seed for domain sampling")
-def dotgov(limit, concurrency, timeout, skip_axe, output_dir, user_agent, seed):
+def dotgov(limit, concurrency, timeout, output_dir, user_agent, seed):
     """Crawl a random sample of .gov domains from the CISA dotgov dataset."""
     config = Config(
         concurrency=concurrency,
         timeout=timeout,
-        skip_axe=skip_axe,
         output_dir=output_dir,
         db_path=_resolve_db_path(output_dir),
     )
@@ -90,15 +88,13 @@ def dotgov(limit, concurrency, timeout, skip_axe, output_dir, user_agent, seed):
 @click.option("--limit", default=None, type=int, help="Max domains to crawl")
 @click.option("--concurrency", default=10, show_default=True)
 @click.option("--timeout", default=15, show_default=True)
-@click.option("--skip-axe", is_flag=True, default=True, show_default=True)
 @click.option("--output-dir", default="outputs", show_default=True)
 @click.option("--user-agent", default=None)
-def crawl(csv_path, limit, concurrency, timeout, skip_axe, output_dir, user_agent):
+def crawl(csv_path, limit, concurrency, timeout, output_dir, user_agent):
     """Crawl domains from a CSV file."""
     config = Config(
         concurrency=concurrency,
         timeout=timeout,
-        skip_axe=skip_axe,
         output_dir=output_dir,
         db_path=_resolve_db_path(output_dir),
     )

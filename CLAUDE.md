@@ -14,7 +14,7 @@ cp .env.example .env             # then fill in MOTHERDUCK_TOKEN or leave blank 
 
 uv run pwo crawl data/seed_domains.csv --limit 100 --concurrency 15   # crawl from a CSV
 uv run pwo dotgov --limit 500 --concurrency 15                       # crawl .gov domains directly (no CSV needed)
-uv run pwo serve                                                      # FastAPI server at :8000
+uv run pwo serve --reload                                             # FastAPI dev server at :8000 (--reload for auto-restart)
 uv run pwo download-geoip                                            # fetch MaxMind GeoLite2-ASN db (needs MAXMIND_LICENSE_KEY)
 ```
 
@@ -28,11 +28,13 @@ There is no test suite in this repo currently (no `tests/` directory despite bei
 - Local DuckDB file (`PWO_DB_PATH`, default `outputs/observations.duckdb`) — fine for reads, but only one crawl process should write at a time.
 - MotherDuck (`MOTHERDUCK_TOKEN` set → connects to `md:pwo`) — required for concurrent writers (e.g. CI + local).
 
-Key views: `v_current` (latest snapshot per domain — what the API and dashboard read), `v_summary`, `v_https_adoption`, `v_hosting_breakdown`, `v_blocked`, `v_file_availability`, `v_tls_expiring`.
+Key views: `v_current` (latest snapshot per domain — what the API and dashboard read), `v_dashboard` (all scalar metrics in one scan — what `/api/stats` reads), `v_summary`, `v_https_adoption`, `v_hosting_breakdown`, `v_blocked`, `v_file_availability`, `v_tls_expiring`. A `run_summary` table stores per-run metadata written after each crawl completes.
 
-**API (`api.py`):** FastAPI app, opens a per-request DuckDB connection, all read logic lives in `queries.py`. `/api/stats` is the single consolidated endpoint the dashboard uses; the individual `/api/stats/*` endpoints are kept only for backwards compatibility.
+**API (`api.py`):** FastAPI app with SSR via Jinja2 templates (`pwo/templates/`). Opens a per-request DuckDB connection (local DuckDB is read-only; MotherDuck handles concurrent reads natively). All read logic lives in `queries.py`. Aggregate stats are cached in-process with a 60s TTL (`_cached()`); `/api/recent` uses a shorter 30s TTL. Pages: `/` (home), `/browse` (filterable domain list), `/insights` (charts/breakdowns), `/about` (methods), `/domains/{domain}`, `/reports`, `/reports/{slug}`. `/methods` 301-redirects to `/about`. The `/api/stats` endpoint returns everything the dashboard needs in one round-trip; individual `/api/stats/*` endpoints are kept only for backwards compatibility.
 
-**Frontend:** single static page at `pwo/static/index.html` served by the FastAPI app (Overview / Browse / Insights / Methods tabs) — no separate frontend build step.
+**Frontend:** SSR Jinja2 templates in `pwo/templates/` with shared base layout (`base.html`), static assets at `pwo/static/` — no separate build step.
+
+**Reports (`reports.py`):** Markdown-backed analysis posts in `reports/posts/*.md`. Each file has YAML frontmatter (`title`, `date`, `summary`) followed by a Markdown body. No database table — posts are committed files served at `/reports/{slug}`.
 
 **Technology fingerprinting (`detector.py`):** patterns sourced from enthec/webappanalyzer, bundled as 27 JSON files in `pwo/fingerprints/`, pre-compiled to regex at import time. Matches HTML body, headers, `<meta>`, `<script src>`, then expands `implies` relationships (e.g. WordPress → PHP → MySQL). Regenerating/updating fingerprints means re-vendoring from that upstream repo, not hand-editing.
 
