@@ -27,7 +27,11 @@ produce a snapshot.
   `QUALIFY ROW_NUMBER() OVER (PARTITION BY domain ORDER BY checked_at DESC) = 1`
   dedup logic as the `v_current` view in `pwo/db.py`. Verified to produce
   an identical result (227,446 domains, same stats) to exporting
-  `v_current` straight from MotherDuck.
+  `v_current` straight from MotherDuck. Also writes `data/tech_top.json` —
+  the default technology breakdown Explore's sidebar shows before any
+  search, precomputed here instead of scanning live in the browser (that
+  scan measured ~1.2s in DuckDB-WASM, more than every other query on the
+  page combined — see "Performance" below).
 - `example-crawl-workflow.yml` — a sketch of the real production workflow
   (crawl → write partition → commit to a `data` branch → compact →
   publish to a GitHub Release). **Not wired up** — lives outside
@@ -205,6 +209,36 @@ came out of):
 - `/api/*` JSON endpoints for external consumers — no equivalent yet;
   could just be "fetch the Parquet file yourself" going forward, or a
   documented DuckDB-WASM snippet.
+
+## Performance
+
+Explore's initial page load fires ~10 queries against `v_current` (total
+count, org-type breakdown, 6 sidebar facet groups, the table's count +
+row select) — all on one DuckDB-WASM connection, which serializes them
+(single-threaded WASM without cross-origin-isolation headers to enable
+the multi-threaded build; opening more JS-level connections doesn't
+change that). Measured directly (`conn.query` timed on an already-warm
+connection): most of those queries run in 16–120ms, except the
+technology sidebar group — a `GROUP BY` after `UNNEST()`-ing the
+`technologies` list column across all 227k rows — which took **~1.2s**,
+more than every other query on the page combined.
+
+Fixed by precomputing that one query's *default* (no search term) result
+in `compact.py` and shipping it as `data/tech_top.json`, fetched instead
+of queried on page load. A typed search still runs the live UNNEST query
+(it has to reach technologies outside the precomputed top 12), but that
+only fires on-demand, well after the page has already rendered. Net
+effect measured end-to-end: full page load (WASM init + parquet fetch +
+all sidebar groups + first table page) dropped from ~3.0s to ~1.0–2.0s
+across repeated runs.
+
+Not yet explored, worth revisiting if this goes further: trimming
+`v_current.parquet` to only the ~25 columns the frontend actually reads
+(it ships all 95 from the real schema) would shrink the file and reduce
+decode work on every query; the file is also downloaded in full rather
+than range-requested locally (`python -m http.server` doesn't support
+`Range`) — GH Pages does, so real deployment should already do better
+than these localhost numbers on that front specifically.
 
 ## Known rough edges to watch for while testing
 

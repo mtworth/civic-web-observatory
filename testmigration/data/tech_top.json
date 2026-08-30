@@ -1,0 +1,62 @@
+[
+  {
+    "value": "jQuery",
+    "label": "jQuery",
+    "count": 105227
+  },
+  {
+    "value": "PHP",
+    "label": "PHP",
+    "count": 83114
+  },
+  {
+    "value": "MySQL",
+    "label": "MySQL",
+    "count": 76129
+  },
+  {
+    "value": "Google Tag Manager",
+    "label": "Google Tag Manager",
+    "count": 72254
+  },
+  {
+    "value": "WordPress",
+    "label": "WordPress",
+    "count": 71915
+  },
+  {
+    "value": "jQuery Migrate",
+    "label": "jQuery Migrate",
+    "count": 69079
+  },
+  {
+    "value": "HTTP/3",
+    "label": "HTTP/3",
+    "count": 60745
+  },
+  {
+    "value": "Google Analytics",
+    "label": "Google Analytics",
+    "count": 57019
+  },
+  {
+    "value": "Cloudflare",
+    "label": "Cloudflare",
+    "count": 50244
+  },
+  {
+    "value": "Nginx",
+    "label": "Nginx",
+    "count": 32245
+  },
+  {
+    "value": "Yoast SEO",
+    "label": "Yoast SEO",
+    "count": 29748
+  },
+  {
+    "value": "Apache HTTP Server",
+    "label": "Apache HTTP Server",
+    "count": 26399
+  }
+]

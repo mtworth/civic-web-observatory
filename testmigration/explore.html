@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="static/style.css">
 <style>
   .proto-banner {
-    background: #fff8e1; border-bottom: 1px solid var(--gray-2);
+    background: var(--gray-1); border-bottom: 1px solid var(--gray-2);
     font-size: 12px; padding: 6px 24px; color: var(--gray-4);
   }
   /* this page's content is wider (1160px) than the shared 900px header/footer — match them */
@@ -184,17 +184,29 @@ function buildWhere() {
 // Queries the full distinct technology set every time — never a pre-capped
 // top-N — so every technology is reachable via search, not just the most
 // common ones. Empty search returns the top TECH_LIST_LIMIT by count.
+let techTopCache = null; // precomputed default breakdown — see compact.py
+
 async function techRowsFor(searchTerm) {
   const term = searchTerm.trim();
-  const whereClause = term
-    ? `WHERE technologies IS NOT NULL AND len(technologies) > 0 AND t ILIKE '%${escapeSqlLiteral(term)}%'`
-    : `WHERE technologies IS NOT NULL AND len(technologies) > 0`;
-  const limit = term ? 40 : TECH_LIST_LIMIT;
+
+  // Default (no search) view: read the precomputed top-N instead of
+  // running the live UNNEST scan — that scan measured ~1.2s in
+  // DuckDB-WASM against 227k rows, by far the slowest query on this page.
+  // A search still needs the live corpus (it must reach technologies
+  // outside this precomputed set), so only the default view is short-circuited.
+  if (!term) {
+    if (!techTopCache) {
+      const res = await fetch("data/tech_top.json");
+      techTopCache = res.ok ? await res.json() : [];
+    }
+    return techTopCache;
+  }
+
   const r = await conn.query(`
     SELECT t AS value, t AS label, count(*) AS count
     FROM v_current, UNNEST(technologies) AS u(t)
-    ${whereClause}
-    GROUP BY 1, 2 ORDER BY 3 DESC LIMIT ${limit}
+    WHERE technologies IS NOT NULL AND len(technologies) > 0 AND t ILIKE '%${escapeSqlLiteral(term)}%'
+    GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 40
   `);
   return rowsToObjects(r);
 }
