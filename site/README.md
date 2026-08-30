@@ -159,17 +159,29 @@ or `npx serve` instead.
 
 ## Deploying to GH Pages
 
-Two independent deploys, on different cadences:
+**Live at https://mtworth.github.io/publicwebobservatory/** (repo made
+public to get there — GitHub Pages and Release assets both require public
+access to work for anonymous visitors; see the note on CORS below for the
+other thing that wasn't obvious until deployed for real).
 
-- **App deploy (rare):** `.github/workflows/deploy-pages.yml` publishes
-  `site/` to GitHub Pages on every push to `main` that touches `site/**`.
-  Only needs to run when the frontend code changes.
-- **Data refresh (daily):** `.github/workflows/crawl-static.yml` writes
-  today's partition, commits it to the `data` branch, runs `compact.py`,
-  and publishes `v_current.parquet`/`tech_top.json` to the `latest`
-  GitHub Release with `--clobber`. The site fetches that release's stable
-  download URL (see `DATA_BASE_URL` in `static/duckdb-client.js`) instead
-  of a local path, so a data refresh never triggers an app redeploy.
+Two workflows, different triggers:
+
+- **`deploy-pages.yml`** publishes `site/` to GitHub Pages — on push to
+  `main` touching `site/**` (app code changed), on `workflow_dispatch`, or
+  via `repository_dispatch` (`crawl-static.yml` fires this after
+  publishing new data). Before packaging the artifact, it downloads
+  `v_current.parquet`/`tech_top.json` from the `latest` Release into
+  `site/data/` — **not** fetched cross-origin at runtime. GitHub's
+  release-asset CDN sends no `Access-Control-Allow-Origin` header, so a
+  browser blocks a cross-origin `fetch()`/XHR to it even though `curl`
+  (which doesn't enforce CORS) succeeds against the exact same URL — this
+  was only caught by testing the actual deployed site, not by testing the
+  URL directly. Baking the file into the same-origin deploy artifact
+  sidesteps it entirely.
+- **`crawl-static.yml`** writes today's partition, commits it to the
+  `data` branch, runs `compact.py`, publishes the new snapshot to the
+  `latest` Release, then dispatches `deploy-pages.yml` so that data
+  actually reaches the live site the same day.
 
 ## Ingestion — the crawler itself, MotherDuck-free
 

@@ -1,8 +1,10 @@
 # Civic Web Index
 
+> **The live site is now [`site/`](site/README.md)** — a static frontend on GitHub Pages reading a Parquet snapshot client-side, with `.github/workflows/crawl-static.yml` as the production ingestion path. This document describes the original FastAPI/MotherDuck/Railway architecture below, which still exists in this repo (`pwo/api.py`, `.github/workflows/crawl.yml`) but is no longer what's deployed — `crawl.yml`'s schedule is disabled, kept only as a manual fallback.
+
 A crawler and analysis platform that maps the digital infrastructure of the American public web — .gov agencies, nonprofits, and civic institutions. Each run produces a structured snapshot per domain covering availability, HTTPS/TLS posture, DNS/hosting, machine-readable files, static accessibility signals, and detected technologies.
 
-Live database: ~19,000 observations across 17,000 domains, growing via periodic crawls.
+Live database: ~19,000 observations across 17,000 domains, growing via periodic crawls. (Stale figure — see `site/README.md` for current counts; this file predates the migration to the static site.)
 
 ---
 

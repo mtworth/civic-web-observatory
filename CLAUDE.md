@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Civic Web Index (package name `pwo` / "public-web-observatory") — an async crawler and analysis platform that maps digital infrastructure (availability, HTTPS/TLS, DNS/hosting, machine-readable files, static accessibility, tech fingerprinting) for .gov agencies and nonprofits. Homepage-only checks, no recursive crawling, no bot-protection bypass. See `concept.md` for the original MVP build spec and `README.md` for full operational docs (crawl options, API endpoints, database views, block-type taxonomy).
 
+**The live site is `site/` (static, GitHub Pages, DuckDB-WASM) — see `site/README.md`.** The FastAPI app described below (`pwo/api.py`, MotherDuck, Railway) still exists but is no longer deployed. What's shared between the two: `pwo/crawler.py`, `pwo/models.py`, and `pwo/parquet_writer.py` (the ingestion path — `pwo crawl --out-parquet` writes straight to Parquet for `site/`'s pipeline, no DB involved). `.github/workflows/crawl-static.yml` is the production crawl now; `.github/workflows/crawl.yml` (MotherDuck-writing) has its schedule disabled, kept only as a manual `workflow_dispatch` fallback.
+
 ## Commands
 
 ```bash
