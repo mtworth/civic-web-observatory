@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths: ["site/**"]
   workflow_dispatch:
+  repository_dispatch:
+    types: [data-refreshed]  # triggered by crawl-static.yml after publishing a new snapshot
 
 permissions:
   contents: read
@@ -23,6 +25,20 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      # GitHub's release-asset CDN doesn't send CORS headers, so the site
+      # can't fetch v_current.parquet/tech_top.json cross-origin from the
+      # Release directly (confirmed: works with curl, fails in-browser).
+      # Bake the latest snapshot into the deploy artifact instead, so the
+      # fetch is same-origin. site/data/*.parquet is gitignored — this
+      # populates it fresh in the runner's workspace only, never commits it.
+      - name: Download latest data snapshot into site/data/
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p site/data
+          gh release download latest --dir site/data --clobber \
+            --pattern "v_current.parquet" --pattern "tech_top.json"
 
       - uses: actions/configure-pages@v5
 

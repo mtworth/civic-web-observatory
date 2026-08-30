@@ -6,16 +6,17 @@
 
 import * as duckdb from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm";
 
-// Data refresh is decoupled from app deploy: the daily crawl workflow
-// re-uploads v_current.parquet/tech_top.json to the `latest` GitHub
-// Release, so the site never needs to redeploy just because the data
-// changed. Locally, keep reading the checked-in-but-gitignored
-// site/data/ path instead, so `python -m http.server` + compact.py still
-// works exactly as before this pointed at a real release.
-export const DATA_BASE_URL =
-  location.hostname === "localhost" || location.hostname === "127.0.0.1"
-    ? "data"
-    : "https://github.com/mtworth/publicwebobservatory/releases/download/latest";
+// The mutable snapshot (v_current.parquet/tech_top.json) is published to
+// the `latest` GitHub Release, not committed to git — but it's fetched
+// same-origin, not directly from the Release. GitHub's release-asset CDN
+// doesn't send CORS headers, so a cross-origin fetch()/XHR from a Pages
+// domain is blocked by the browser (confirmed directly: curl succeeds
+// since it doesn't enforce CORS, but DuckDB-WASM's in-browser XHR fails
+// with a NetworkError). Instead, deploy-pages.yml downloads the latest
+// release assets into site/data/ before packaging the Pages artifact, so
+// this path resolves the same way locally (compact.py writes here) and
+// in production (the deploy workflow writes here) — same-origin either way.
+export const DATA_BASE_URL = "data";
 
 let dbPromise = null;
 

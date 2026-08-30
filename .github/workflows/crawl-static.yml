@@ -112,6 +112,15 @@ jobs:
         run: |
           gh release upload latest /tmp/compacted/v_current.parquet /tmp/compacted/tech_top.json --clobber
 
+      # The Pages deploy bakes the snapshot into its artifact at deploy
+      # time (GitHub's release-asset CDN has no CORS headers, so the site
+      # can't fetch it cross-origin from the Release directly) — trigger
+      # that deploy now so today's data actually reaches the live site.
+      - name: Trigger a Pages redeploy with the new snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/${{ github.repository }}/dispatches -f event_type=data-refreshed
+
   # A separate, much less frequent job (weekly/monthly, not shown) would
   # roll up old daily partitions into fewer larger monthly files once the
   # partition count grows into the hundreds — not urgent yet, but worth
