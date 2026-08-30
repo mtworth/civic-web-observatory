@@ -3,20 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Insights — Civic Web Index static prototype</title>
-<meta name="description" content="Analysis and thought leadership on the digital infrastructure of the American civic web. Static GH-Pages prototype, no server.">
+<title>Insights — Civic Web Index</title>
+<meta name="description" content="Analysis and thought leadership on the digital infrastructure of the American civic web.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/style.css">
-<style>
-  .proto-banner {
-    background: var(--gray-1); border-bottom: 1px solid var(--gray-2);
-    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
-  }
-</style>
 </head>
 <body>
-
-<div class="proto-banner">Static prototype — posts are plain Markdown files fetched and parsed in your browser, no server or CMS. <span id="load-status">Loading…</span></div>
 
 <header class="site-header">
   <a class="wordmark" href="index.html">Civic Web Index</a>
@@ -24,7 +16,7 @@
     <ul class="site-nav">
       <li><a href="explore.html">Explore</a></li>
       <li><a href="insights.html" class="active" aria-current="page">Insights</a></li>
-      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+      <li><a href="#" aria-disabled="true" title="Coming soon">About</a></li>
     </ul>
   </nav>
 </header>
@@ -43,21 +35,16 @@
 </main>
 
 <footer class="site-footer">
-  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
-  <ul class="footer-links">
-    <li><a href="README.md">README</a></li>
-  </ul>
+  <span class="footer-copy">civicwebindex.org</span>
 </footer>
 
 <script type="module">
 import { fetchAllPosts } from "./static/insights-client.js";
 
-const loadStatus = document.getElementById("load-status");
 const postList = document.getElementById("post-list");
 
 async function main() {
   const posts = await fetchAllPosts();
-  loadStatus.textContent = `Loaded ${posts.length} post${posts.length === 1 ? "" : "s"}.`;
 
   if (!posts.length) {
     postList.innerHTML = `<p style="color:var(--gray-3)">No posts published yet.</p>`;
@@ -75,7 +62,6 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  loadStatus.textContent = `Failed to load: ${err.message}`;
 });
 </script>
 

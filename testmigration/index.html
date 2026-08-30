@@ -3,20 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Civic Web Index — static prototype</title>
-<meta name="description" content="Mapping the digital infrastructure of the American civic web — HTTPS, hosting, accessibility, and more. Static GH-Pages prototype, no server.">
+<title>Civic Web Index</title>
+<meta name="description" content="Mapping the digital infrastructure of the American civic web — HTTPS, hosting, accessibility, and more.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/style.css">
-<style>
-  .proto-banner {
-    background: var(--gray-1); border-bottom: 1px solid var(--gray-2);
-    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
-  }
-</style>
 </head>
 <body>
-
-<div class="proto-banner">Static prototype — data loaded client-side from a Parquet snapshot via DuckDB-WASM, no server. <span id="load-status">Loading…</span></div>
 
 <header class="site-header">
   <a class="wordmark" href="index.html">Civic Web Index</a>
@@ -24,7 +16,7 @@
     <ul class="site-nav">
       <li><a href="explore.html">Explore</a></li>
       <li><a href="insights.html">Insights</a></li>
-      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+      <li><a href="#" aria-disabled="true" title="Coming soon">About</a></li>
     </ul>
   </nav>
 </header>
@@ -48,13 +40,6 @@
     </div>
   </div>
 
-  <div class="stat-strip" id="stat-strip">
-    <div class="stat-tile accent"><div class="n skel" id="stat-https">83.5%</div><div class="l">HTTPS available</div><div class="bar-track"><span class="bar-fill" id="bar-https" style="width:0%"></span></div></div>
-    <div class="stat-tile warn"><div class="n skel" id="stat-blocked">41,704</div><div class="l">Blocked / challenged</div><div class="bar-track"><span class="bar-fill" id="bar-blocked" style="width:0%"></span></div></div>
-    <div class="stat-tile"><div class="n skel" id="stat-parked">5,988</div><div class="l">Probably parked</div><div class="bar-track"><span class="bar-fill" id="bar-parked" style="width:0%"></span></div></div>
-    <div class="stat-tile"><div class="n skel" id="stat-total">227,446</div><div class="l">Domains tracked</div><div class="bar-track"><span class="bar-fill" id="bar-total" style="width:0%"></span></div></div>
-  </div>
-
   <div class="feed-section">
     <div class="feed-eyebrow"><span class="live-dot"></span> Recent observations</div>
     <ul class="feed-list" id="feed-list">
@@ -71,16 +56,15 @@
 </main>
 
 <footer class="site-footer">
-  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
-  <ul class="footer-links">
-    <li><a href="README.md">README</a></li>
-  </ul>
+  <span class="footer-copy">civicwebindex.org</span>
 </footer>
 
 <script type="module">
   import { initDb, formatInt, timeAgo, signalFor, rowsToObjects } from "./static/duckdb-client.js";
 
-  const loadStatus = document.getElementById("load-status");
+  const MAX_VISIBLE = 8;
+  const ROTATE_MS = 1000;
+
   const liveBadge = document.getElementById("live-badge");
   const heroTotal = document.getElementById("hero-total");
   const feedList = document.getElementById("feed-list");
@@ -110,11 +94,28 @@
     return li;
   }
 
-  function setStat(elId, barId, text, pct) {
-    const el = document.getElementById(elId);
-    el.textContent = text;
-    unskeleton(el);
-    if (barId) document.getElementById(barId).style.width = pct + "%";
+  // Cycles a sampled pool of recent (last-3-day) observations through the
+  // feed, prepending one new item every ROTATE_MS and trimming to
+  // MAX_VISIBLE — mirrors the production home page's live-feed behavior.
+  function startRotation(pool) {
+    if (!pool.length) return;
+    let offset = MAX_VISIBLE; // the first MAX_VISIBLE items are already on screen from the initial render
+    setInterval(() => {
+      const next = pool[offset % pool.length];
+      offset++;
+      feedList.prepend(renderItem(next));
+      while (feedList.children.length > MAX_VISIBLE) {
+        feedList.removeChild(feedList.lastChild);
+      }
+    }, ROTATE_MS);
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
 
   async function main() {
@@ -126,38 +127,41 @@
     unskeleton(heroTotal);
     liveBadge.textContent = `${formatInt(total)} domains monitored · updated daily`;
     unskeleton(liveBadge);
-    loadStatus.textContent = `Loaded ${formatInt(total)} domains from a static Parquet file.`;
 
-    const statsResult = await conn.query(`
-      SELECT
-        CAST(sum(CASE WHEN https_available THEN 1 ELSE 0 END) AS DOUBLE) AS https_n,
-        CAST(sum(CASE WHEN homepage_block_type IS NOT NULL AND homepage_block_type != 'none' THEN 1 ELSE 0 END) AS DOUBLE) AS blocked_n,
-        CAST(sum(CASE WHEN is_probably_parked THEN 1 ELSE 0 END) AS DOUBLE) AS parked_n
-      FROM v_current
-    `);
-    const s = statsResult.toArray()[0];
-    const httpsPct = (s.https_n / total) * 100;
-    setStat("stat-https", "bar-https", httpsPct.toFixed(1) + "%", httpsPct);
-    setStat("stat-blocked", "bar-blocked", formatInt(s.blocked_n), (s.blocked_n / total) * 100);
-    setStat("stat-parked", "bar-parked", formatInt(s.parked_n), (s.parked_n / total) * 100);
-    setStat("stat-total", "bar-total", formatInt(total), 100);
+    // "Recent" is relative to the freshest observation in the snapshot, not
+    // wall-clock time — the crawl runs daily, so this stays meaningful
+    // however old the exported Parquet file itself is. Computed in JS: this
+    // DuckDB-WASM build's SQL doesn't support TIMESTAMPTZ - INTERVAL
+    // arithmetic (works in a full DuckDB CLI, throws a Binder Error here).
+    const maxCheckedRes = await conn.query(`SELECT max(checked_at) AS max_checked FROM v_current`);
+    const maxChecked = new Date(rowsToObjects(maxCheckedRes)[0].max_checked);
+    const cutoff = new Date(maxChecked.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
+    // ORDER BY random() LIMIT n, not USING SAMPLE: this DuckDB-WASM build's
+    // default (system/block) sampling combined with a selective WHERE
+    // filter returned as few as 2 rows instead of the requested 60 — likely
+    // sampling storage blocks before the filter narrows them down, so most
+    // sampled blocks contained no matching rows. ORDER BY random() always
+    // samples from the already-filtered result.
     const recentResult = await conn.query(`
       SELECT domain, org_name, org_type, checked_at, collection_status,
              homepage_block_type, https_available, tls_valid,
              tls_days_until_expiry, llms_txt_available, dns_resolves,
              technologies, is_probably_parked
       FROM v_current
-      USING SAMPLE 60
+      WHERE checked_at >= TIMESTAMP '${cutoff.replace("T", " ").replace("Z", "")}'
+      ORDER BY random()
+      LIMIT 60
     `);
-    const items = rowsToObjects(recentResult).slice(0, 8);
+    const pool = shuffle(rowsToObjects(recentResult));
+
     feedList.innerHTML = "";
-    items.forEach((d) => feedList.appendChild(renderItem(d)));
+    pool.slice(0, MAX_VISIBLE).forEach((d) => feedList.appendChild(renderItem(d)));
+    startRotation(pool);
   }
 
   main().catch((err) => {
     console.error(err);
-    loadStatus.textContent = `Failed to load: ${err.message}`;
   });
 </script>
 

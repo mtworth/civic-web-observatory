@@ -3,21 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title">Insights — Civic Web Index static prototype</title>
+<title id="page-title">Insights — Civic Web Index</title>
 <meta name="description" id="page-description" content="">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/style.css">
 <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
-<style>
-  .proto-banner {
-    background: var(--gray-1); border-bottom: 1px solid var(--gray-2);
-    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
-  }
-</style>
 </head>
 <body>
-
-<div class="proto-banner">Static prototype — this post is fetched and rendered from a plain .md file in your browser. <span id="load-status">Loading…</span></div>
 
 <header class="site-header">
   <a class="wordmark" href="index.html">Civic Web Index</a>
@@ -25,7 +17,7 @@
     <ul class="site-nav">
       <li><a href="explore.html">Explore</a></li>
       <li><a href="insights.html" class="active" aria-current="page">Insights</a></li>
-      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+      <li><a href="#" aria-disabled="true" title="Coming soon">About</a></li>
     </ul>
   </nav>
 </header>
@@ -36,6 +28,14 @@
   <a class="domain-back" href="insights.html">&larr; Back to insights</a>
   <p id="not-found" hidden style="margin-top:1.5rem; color:var(--gray-3)">Post not found.</p>
 
+  <div id="skeleton-body" style="margin-top:1.5rem">
+    <div class="skel" style="height:11px; width:80px; margin-bottom:1rem;"></div>
+    <div class="skel" style="height:24px; width:60%; margin-bottom:1.5rem;"></div>
+    <div class="skel" style="height:14px; margin-bottom:.6rem;"></div>
+    <div class="skel" style="height:14px; margin-bottom:.6rem;"></div>
+    <div class="skel" style="height:14px; width:80%;"></div>
+  </div>
+
   <div id="post-body" hidden>
     <div class="report-date" id="post-date" style="margin-top:1.5rem"></div>
     <h2 id="post-title"></h2>
@@ -45,22 +45,18 @@
 </main>
 
 <footer class="site-footer">
-  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
-  <ul class="footer-links">
-    <li><a href="README.md">README</a></li>
-  </ul>
+  <span class="footer-copy">civicwebindex.org</span>
 </footer>
 
 <script type="module">
 import { fetchPost } from "./static/insights-client.js";
 
-const loadStatus = document.getElementById("load-status");
 const params = new URLSearchParams(location.search);
 const slug = params.get("slug");
 
 async function main() {
   if (!slug) {
-    loadStatus.textContent = "No post specified — append ?slug=some-post to the URL.";
+    document.getElementById("skeleton-body").hidden = true;
     document.getElementById("not-found").hidden = false;
     document.getElementById("not-found").textContent = "No post specified — append ?slug=some-post to the URL.";
     return;
@@ -68,23 +64,24 @@ async function main() {
 
   const post = await fetchPost(slug);
   if (!post) {
-    loadStatus.textContent = `Failed to load: no post found for "${slug}".`;
+    document.getElementById("skeleton-body").hidden = true;
     document.getElementById("not-found").hidden = false;
     return;
   }
 
-  document.getElementById("page-title").textContent = `${post.title} — Civic Web Index static prototype`;
+  document.getElementById("page-title").textContent = `${post.title} — Civic Web Index`;
   document.getElementById("page-description").setAttribute("content", post.summary);
   document.getElementById("post-date").textContent = post.date;
   document.getElementById("post-title").textContent = post.title;
   document.getElementById("post-content").innerHTML = marked.parse(post.bodyMarkdown);
-  document.getElementById("post-body").hidden = false;
-  loadStatus.textContent = "Loaded post.";
+  document.getElementById("skeleton-body").hidden = true;
+  const postBody = document.getElementById("post-body");
+  postBody.hidden = false;
+  postBody.classList.add("fade-in");
 }
 
 main().catch((err) => {
   console.error(err);
-  loadStatus.textContent = `Failed to load: ${err.message}`;
 });
 </script>
 

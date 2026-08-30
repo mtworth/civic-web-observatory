@@ -3,21 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title">Domain — Civic Web Index static prototype</title>
+<title id="page-title">Domain — Civic Web Index</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/style.css">
 <style>
-  .proto-banner {
-    background: var(--gray-1); border-bottom: 1px solid var(--gray-2);
-    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
-  }
   .tech-list { display: flex; flex-wrap: wrap; gap: .4rem; }
   .tech-tag { font-family: var(--mono); font-size: 11px; background: var(--gray-1); padding: .2rem .5rem; border-radius: 2px; }
 </style>
 </head>
 <body>
-
-<div class="proto-banner">Static prototype — this record is queried live from the Parquet snapshot by domain name. <span id="load-status">Loading…</span></div>
 
 <header class="site-header">
   <a class="wordmark" href="index.html">Civic Web Index</a>
@@ -25,7 +19,7 @@
     <ul class="site-nav">
       <li><a href="explore.html">Explore</a></li>
       <li><a href="insights.html">Insights</a></li>
-      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+      <li><a href="#" aria-disabled="true" title="Coming soon">About</a></li>
     </ul>
   </nav>
 </header>
@@ -60,24 +54,20 @@
     <div class="field-grid" id="field-grid"></div>
 
     <p style="color: var(--gray-3); font-size: 13px; margin-top: 24px;">
-      Full observation history isn't shipped to the static snapshot (see
-      <a href="README.md">README</a>) — this shows the latest observation only.
+      Full observation history isn't available in this view yet — showing the
+      latest observation only.
     </p>
   </div>
 </div>
 </main>
 
 <footer class="site-footer">
-  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
-  <ul class="footer-links">
-    <li><a href="README.md">README</a></li>
-  </ul>
+  <span class="footer-copy">civicwebindex.org</span>
 </footer>
 
 <script type="module">
 import { initDb, escapeSqlLiteral, rowsToObjects } from "./static/duckdb-client.js";
 
-const loadStatus = document.getElementById("load-status");
 const params = new URLSearchParams(location.search);
 const domain = params.get("d");
 
@@ -98,7 +88,6 @@ function statusDot(ok) {
 
 async function main() {
   if (!domain) {
-    loadStatus.textContent = "No domain specified — append ?d=example.gov to the URL.";
     document.getElementById("skeleton-body").hidden = true;
     document.getElementById("not-found").hidden = false;
     document.getElementById("not-found").textContent = "No domain specified — append ?d=example.gov to the URL.";
@@ -108,7 +97,6 @@ async function main() {
   const { conn } = await initDb();
   const result = await conn.query(`SELECT * FROM v_current WHERE domain = '${escapeSqlLiteral(domain)}' LIMIT 1`);
   const rows = rowsToObjects(result);
-  loadStatus.textContent = "Loaded snapshot.";
 
   if (!rows.length) {
     document.getElementById("skeleton-body").hidden = true;
@@ -117,7 +105,7 @@ async function main() {
   }
 
   const d = rows[0];
-  document.getElementById("page-title").textContent = `${d.domain} — Civic Web Index static prototype`;
+  document.getElementById("page-title").textContent = `${d.domain} — Civic Web Index`;
   document.getElementById("d-domain").textContent = d.domain;
 
   const checkedAt = d.checked_at ? new Date(d.checked_at).toLocaleString() : "unknown time";
@@ -186,7 +174,6 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  loadStatus.textContent = `Failed to load: ${err.message}`;
 });
 </script>
 

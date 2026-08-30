@@ -22,7 +22,7 @@ body {
 
 /* ── HEADER ── */
 .site-header {
-  max-width: 900px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 1.75rem 1.5rem;
   display: flex;
@@ -65,7 +65,7 @@ body {
 }
 
 .header-rule {
-  max-width: 900px;
+  max-width: 1160px;
   margin: 0 auto;
   border: none;
   border-top: 1px solid var(--gray-2);
@@ -80,7 +80,7 @@ body {
    LANDING
 ════════════════════════ */
 .landing {
-  max-width: 900px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
@@ -114,13 +114,6 @@ body {
 .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--black); animation: pulse 2s ease-in-out infinite; flex-shrink: 0; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 
-.stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--gray-2); border-radius: 3px; overflow: hidden; margin-bottom: 2.75rem; }
-.stat-tile { background: var(--white); padding: 1.1rem 1.35rem; border-left: 1px solid var(--gray-2); }
-.stat-tile:first-child { border-left: none; }
-.stat-tile .n { font-family: var(--mono); font-size: 24px; font-weight: 500; letter-spacing: -.02em; line-height: 1.1; }
-.stat-tile .l { font-size: 10.5px; color: var(--gray-3); text-transform: uppercase; letter-spacing: .06em; margin-top: .45rem; }
-.stat-tile .bar-track { height: 3px; background: var(--gray-1); border-radius: 2px; overflow: hidden; margin-top: .65rem; }
-.stat-tile .bar-fill { display: block; height: 100%; background: var(--black); }
 /* skeleton / graceful loading */
 .skel {
   background: linear-gradient(90deg, var(--gray-1) 25%, var(--gray-2) 37%, var(--gray-1) 63%);
@@ -410,11 +403,6 @@ body {
 .inspect-link { font-size: 11px; color: var(--gray-3); text-decoration: none; white-space: nowrap; }
 .inspect-link:hover { color: var(--black); }
 
-@media (max-width: 960px) {
-  .stat-strip { grid-template-columns: repeat(2, 1fr); }
-  .stat-tile:nth-child(3) { border-left: none; }
-}
-
 /* ── LIVE FEED ── */
 .feed-section {
   border-top: 1px solid var(--gray-2);
@@ -455,7 +443,7 @@ body {
 /* ════════════════════════
    DOMAIN PROFILE
 ════════════════════════ */
-.domain-profile { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+.domain-profile { max-width: 1160px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 
 .domain-back {
   font-family: 'Inter', sans-serif;
@@ -501,7 +489,7 @@ body {
 .history-table td { padding: .5rem .75rem .5rem 0; border-bottom: 1px solid var(--gray-2); font-size: 12.5px; vertical-align: top; }
 .history-table tr:last-child td { border-bottom: none; }
 
-.methods-body { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+.methods-body { max-width: 1160px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
 .methods-body h2 { font-size: 18px; font-weight: 400; margin-bottom: 1rem; }
 .methods-body h3 { font-size: 13px; font-weight: 500; margin: 1.75rem 0 .5rem; }
 .methods-body p, .methods-body li { font-size: 13px; color: var(--gray-4); line-height: 1.65; }
@@ -554,7 +542,7 @@ body {
 /* ── FOOTER ── */
 .site-footer {
   border-top: 1px solid var(--gray-2);
-  max-width: 900px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 1.25rem 1.5rem 2.5rem;
   display: flex;

@@ -3,22 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Explore — Civic Web Index static prototype</title>
-<meta name="description" content="Explore government and nonprofit domains by technology, hosting, blocking, HTTPS/TLS, and machine-readable files. Static GH-Pages prototype, no server.">
+<title>Explore — Civic Web Index</title>
+<meta name="description" content="Explore government and nonprofit domains by technology, hosting, blocking, HTTPS/TLS, and machine-readable files.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/style.css">
-<style>
-  .proto-banner {
-    background: var(--gray-1); border-bottom: 1px solid var(--gray-2);
-    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
-  }
-  /* this page's content is wider (1160px) than the shared 900px header/footer — match them */
-  .site-header, .header-rule, .site-footer { max-width: 1160px; }
-</style>
 </head>
 <body>
-
-<div class="proto-banner">Static prototype — filters, search, and pagination all run as SQL against a Parquet file in your browser. <span id="load-status">Loading…</span></div>
 
 <header class="site-header">
   <a class="wordmark" href="index.html">Civic Web Index</a>
@@ -26,7 +16,7 @@
     <ul class="site-nav">
       <li><a href="explore.html" class="active" aria-current="page">Explore</a></li>
       <li><a href="insights.html">Insights</a></li>
-      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+      <li><a href="#" aria-disabled="true" title="Coming soon">About</a></li>
     </ul>
   </nav>
 </header>
@@ -41,7 +31,7 @@
       <span class="explore-context-sep" aria-hidden="true">&middot;</span>
       <span class="explore-context-total" id="ctx-total">… domains</span>
       <span class="explore-context-sep" aria-hidden="true">&middot;</span>
-      <span class="explore-context-updated">snapshot from a static Parquet file</span>
+      <span class="explore-context-updated">updated daily</span>
     </div>
   </div>
 
@@ -101,10 +91,7 @@
 </main>
 
 <footer class="site-footer">
-  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
-  <ul class="footer-links">
-    <li><a href="README.md">README</a></li>
-  </ul>
+  <span class="footer-copy">civicwebindex.org</span>
 </footer>
 
 <script type="module">
@@ -130,7 +117,6 @@ let loadToken = 0; // guards against overlapping loadRows() calls resolving out 
 let techToken = 0; // guards the technology panel against the initial default fetch and a search fetch resolving out of order
 let activeFacets = {}; // category -> { value, label }
 
-const loadStatus = document.getElementById("load-status");
 const ctxTotal = document.getElementById("ctx-total");
 const recordsTitle = document.getElementById("records-heading");
 const recordsCount = document.getElementById("records-count");
@@ -462,7 +448,6 @@ async function main() {
   const totalRes = await conn.query(`SELECT count(*) AS n FROM v_current`);
   totalRows = Number(rowsToObjects(totalRes)[0].n);
   ctxTotal.textContent = `${formatInt(totalRows)} domains`;
-  loadStatus.textContent = `Loaded ${formatInt(totalRows)} domains from a static Parquet file.`;
 
   const orgTypesRes = await conn.query(`SELECT COALESCE(org_type,'unknown') AS org_type, count(*) AS count FROM v_current GROUP BY 1 ORDER BY 2 DESC`);
   rowsToObjects(orgTypesRes).forEach((r) => {
@@ -479,7 +464,6 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  loadStatus.textContent = `Failed to load: ${err.message}`;
 });
 </script>
 

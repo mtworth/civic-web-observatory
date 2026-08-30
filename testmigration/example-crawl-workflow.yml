@@ -1,13 +1,18 @@
 # NOT an active workflow — lives in testmigration/, not .github/workflows/,
 # so GitHub Actions never picks it up. This is a sketch of what would
 # replace .github/workflows/crawl.yml if the MotherDuck migration goes
-# ahead. Copy into .github/workflows/ and adjust once the real crawler is
-# rewritten to emit a partition file instead of DB rows.
+# ahead — every command below is real and has been run locally (see
+# testmigration/README.md's "Ingestion" section), but the workflow itself
+# has never executed in CI: it needs a `data` branch to exist, a GitHub
+# Release tag to publish to, and Actions permissions/secrets this sketch
+# doesn't set up. Copy into .github/workflows/, create the `data` branch
+# and an empty `latest` release, and confirm those pieces before enabling.
 #
-# Design: the daily slice logic (SHA-256(domain) % 90 == today % 90) is a
-# pure function of the date — it needs no prior state, so nothing here
-# depends on reading yesterday's data before deciding what to crawl today.
-# What *does* need continuity across runs is the accumulated observation
+# Design: the daily slice logic (SHA-256(domain) % 90 == today % 90,
+# copied verbatim from the real .github/workflows/crawl.yml) is a pure
+# function of the date — it needs no prior state, so nothing here depends
+# on reading yesterday's data before deciding what to crawl today. What
+# *does* need continuity across runs is the accumulated observation
 # history, handled by two separate artifacts with very different lifetimes:
 #
 #   1. Raw partitions — one small immutable Parquet file per crawl day,
@@ -39,48 +44,82 @@ concurrency:
 jobs:
   crawl:
     runs-on: ubuntu-latest
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
 
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+          enable-cache: true
       - run: uv sync
 
-      # Pure function of today's date — no need to read prior state first.
+      # Identical slicing to the real .github/workflows/crawl.yml — pure
+      # function of today's date, no prior state needed.
+      - name: Slice today's domains
+        id: slice
+        run: |
+          python3 - <<'EOF'
+          import csv, hashlib, datetime
+
+          with open('data/seed_domains.csv', newline='') as f:
+              reader = csv.DictReader(f)
+              fieldnames = reader.fieldnames
+              bucket = datetime.date.today().toordinal() % 90
+              rows = [
+                  r for r in reader
+                  if int(hashlib.sha256(r['domain'].encode()).hexdigest(), 16) % 90 == bucket
+              ]
+
+          with open('/tmp/daily_slice.csv', 'w', newline='') as f:
+              writer = csv.DictWriter(f, fieldnames=fieldnames)
+              writer.writeheader()
+              writer.writerows(rows)
+
+          print(f"Domains in slice: {len(rows):,}")
+          EOF
+
+      - name: Download GeoLite2-ASN database
+        run: uv run pwo download-geoip
+        env:
+          MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
+
+      # No MOTHERDUCK_TOKEN — --out-parquet writes straight to a file,
+      # never opens a database connection. Verified locally against both
+      # `pwo crawl` and `pwo dotgov`.
       - name: Crawl today's slice
         run: |
-          uv run pwo dotgov \
-            --slice-today \
-            --out data/observations/$(date +%F).parquet
-          # ^ illustrative flag; the real crawler currently writes to
-          # db.py/DuckDB, not a Parquet file directly — this is the piece
-          # that needs rewriting, not something that exists today.
+          uv run pwo crawl /tmp/daily_slice.csv --concurrency 25 --timeout 10 \
+            --out-parquet /tmp/partition.parquet
 
       - name: Commit today's partition to the data branch
         run: |
           git fetch origin data
           git worktree add /tmp/data-branch origin/data
-          cp data/observations/$(date +%F).parquet /tmp/data-branch/observations/
+          mkdir -p /tmp/data-branch/observations
+          cp /tmp/partition.parquet "/tmp/data-branch/observations/$(date +%F).parquet"
           cd /tmp/data-branch
-          git add observations/$(date +%F).parquet
+          git add "observations/$(date +%F).parquet"
           git -c user.name="crawl-bot" -c user.email="crawl-bot@users.noreply.github.com" \
             commit -m "observations: $(date +%F)"
           git push origin HEAD:data
 
+      # compact.py's --partitions-dir/--out-dir let it run against the
+      # checked-out data branch instead of testmigration/data/ (its
+      # default when run locally by hand).
       - name: Compact all partitions into v_current
         run: |
-          git fetch origin data
-          git worktree add /tmp/data-branch origin/data  # includes today's new partition
           uv run python testmigration/compact.py \
-            --partitions /tmp/data-branch/observations \
-            --out v_current.parquet
+            --partitions-dir /tmp/data-branch/observations \
+            --out-dir /tmp/compacted
 
       - name: Publish snapshot as a GitHub Release asset
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload latest v_current.parquet --clobber
+          gh release upload latest /tmp/compacted/v_current.parquet /tmp/compacted/tech_top.json --clobber
 
   # A separate, much less frequent job (weekly/monthly, not shown) would
   # roll up old daily partitions into fewer larger monthly files once the

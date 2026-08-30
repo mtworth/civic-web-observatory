@@ -167,11 +167,67 @@ for the sketch:
   `data/v_current.parquet` path it uses today.
 
 Not built yet — this experiment is currently local-only, and the example
-workflow deliberately isn't wired into `.github/workflows/`. It also
-depends on the real crawler being rewritten to emit a partition file
-directly instead of writing to MotherDuck, which hasn't happened — right
-now `partition_export.py`/`compact.py` only prove the *shape* works
-against historical data pulled from MotherDuck.
+workflow deliberately isn't wired into `.github/workflows/` (it also needs
+a `data` branch and a `latest` release to exist, and Actions secrets/
+permissions this repo doesn't have configured yet). What **is** done and
+verified: `pwo crawl`/`pwo dotgov --out-parquet <path>` write a real crawl
+batch straight to Parquet with zero DB/MotherDuck involvement — see
+"Ingestion" below.
+
+## Ingestion — the crawler itself, MotherDuck-free
+
+`pwo/crawler.py` was already well-decoupled from storage: `run_crawl()`
+returns plain `DomainObservation` objects and only calls an `on_result`
+callback per result — it never talks to a database itself. All DB writing
+happened in `cli.py`'s `_run()`. That meant adding a MotherDuck-free output
+path didn't require touching the crawler at all:
+
+- **`pwo/parquet_writer.py`** (new) — `write_observations_parquet()`
+  writes a batch of `DomainObservation`s straight to a Parquet file. No DB
+  connection, no `MOTHERDUCK_TOKEN`. DuckDB's Python replacement scan
+  doesn't accept a plain list of dicts (only DataFrame/Arrow/relations),
+  and this project has no pandas/pyarrow dependency, so it round-trips
+  through a temp NDJSON file and lets DuckDB's JSON reader do the
+  materialization — but every column is explicitly cast to the type
+  derived from `DomainObservation`'s own field annotations, not left to
+  `read_json_auto()`'s inference. That distinction mattered in testing: a
+  3-domain batch where every row had `org_name = None` got inferred as
+  JSON type instead of VARCHAR, which then broke `compact.py`'s glob read
+  the moment that partition sat next to a differently-typed one. Explicit
+  casts make every partition's schema identical regardless of which
+  columns happen to be all-NULL in a given day's batch.
+- **`cli.py`** — `pwo crawl`/`pwo dotgov` gained a `--out-parquet PATH`
+  flag. Omit it and behavior is 100% unchanged (writes to
+  MotherDuck/DuckDB exactly as today — this is what production's real
+  `.github/workflows/crawl.yml` still does, untouched). Pass it and the
+  command never opens a DB connection at all: results are collected in
+  memory and written once at the end.
+- **`compact.py`** — now takes `--partitions-dir`/`--out-dir` (defaulting
+  to the same local paths as before, so plain `uv run python
+  testmigration/compact.py` is unchanged) so a real workflow can point it
+  at a checked-out `data` branch. Also switched to
+  `read_parquet(glob, union_by_name=true)` plus an explicit `EXCLUDE` of
+  nine legacy `axe_*` columns — the historical MotherDuck-sourced
+  partitions carry those from before that code was removed
+  (`chore: remove stale files and axe stub code`), but partitions written
+  by the new `--out-parquet` path don't have them, and DuckDB's default
+  glob read requires byte-identical schemas across every file it globs.
+
+Verified end-to-end, not just written: ran a real `pwo dotgov --limit 3
+--out-parquet` crawl, copied the resulting partition alongside the 67 real
+historical ones, ran `compact.py`, and confirmed the 3 domains it crawled
+correctly took precedence (latest `checked_at` wins the per-domain
+dedup), the total stayed at 227,446 (no duplicates), and the static site
+still worked against the result with zero console errors. Also ran a
+`pwo crawl` (not just `dotgov`) against a one-row CSV to confirm the
+command production's actual crawl.yml uses works the same way, including
+the failure path (a DNS-failed domain still writes a valid row).
+
+**Still not done:** no workflow has actually run this in CI — see
+"Deploying to GH Pages" above for what's missing before `example-crawl-
+workflow.yml` could be copied into `.github/workflows/` for real.
+`.github/workflows/crawl.yml` (production) is completely untouched and
+still writes to MotherDuck on its existing schedule.
 
 ## What this does and doesn't prove
 
