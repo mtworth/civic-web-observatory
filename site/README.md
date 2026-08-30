@@ -1,13 +1,17 @@
-# testmigration — static GH Pages prototype
+# site — the static Civic Web Index
 
-Experiment: can the read side of Civic Web Index run as **pure static files**
-(no FastAPI, no Railway, no live DB connection) using a Parquet snapshot
-queried in-browser with [DuckDB-WASM](https://duckdb.org/docs/api/wasm/overview)?
+The read side of Civic Web Index as **pure static files** — no FastAPI, no
+Railway, no live DB connection — a Parquet snapshot queried in-browser with
+[DuckDB-WASM](https://duckdb.org/docs/api/wasm/overview). This is what
+`.github/workflows/deploy-pages.yml` publishes to GitHub Pages.
 
-This folder is self-contained and does not touch the production app
-(`pwo/`). Nothing here is wired into `crawler.py`, `api.py`, or the
-`.github/workflows/crawl.yml` cron — it only reads from MotherDuck to
-produce a snapshot.
+This started as an experiment (originally under `testmigration/`, renamed
+here once the approach was validated) and does not touch `pwo/`'s FastAPI
+app code — the two now share only `pwo/crawler.py`/`pwo/models.py`/
+`pwo/parquet_writer.py` for ingestion (see "Ingestion" below).
+`pwo/api.py` and `.github/workflows/crawl.yml` (the MotherDuck-writing
+crawl) still exist but are no longer the production path — `crawl.yml`'s
+schedule is disabled in favor of `crawl-static.yml`.
 
 ## What's here
 
@@ -124,18 +128,19 @@ Not urgent at 67 files today; will matter eventually.
 ## Run it locally
 
 ```bash
-# 1. Get the raw daily partitions (needs MOTHERDUCK_TOKEN in .env, same as
-#    the main app — this step goes away once the crawler writes partitions
-#    directly instead of to MotherDuck)
-uv run python testmigration/partition_export.py
+# 1. Get raw daily partitions into site/data/observations/ — either:
+#    a) crawl straight to Parquet (the real path — no MotherDuck at all):
+uv run pwo crawl data/seed_domains.csv --out-parquet site/data/observations/$(date +%F).parquet
+#    b) or, for historical/backfill data still only in MotherDuck:
+uv run python site/partition_export.py   # needs MOTHERDUCK_TOKEN in .env
 
-# 2. Compact them into the flat snapshot the site reads — this step is
-#    MotherDuck-free, local files only, and is what production CI would run
-uv run python testmigration/compact.py
+# 2. Compact partitions into the flat snapshot the site reads — this step
+#    is MotherDuck-free, local files only, and is what crawl-static.yml runs
+uv run python site/compact.py
 
 # 3. Serve the folder over HTTP (must be a real HTTP server, not file://,
 #    since DuckDB-WASM fetches the Parquet file via range requests)
-cd testmigration
+cd site
 python3 -m http.server 8080
 
 # 4. Open http://localhost:8080
@@ -152,27 +157,19 @@ partial-fetch behavior you'd see on GH Pages / any CDN. If you want to
 verify true range-request behavior locally, use `npx http-server -p 8080`
 or `npx serve` instead.
 
-## Deploying to GH Pages (to test the real thing)
+## Deploying to GH Pages
 
-Two independent deploys, on different cadences — see `example-crawl-workflow.yml`
-for the sketch:
+Two independent deploys, on different cadences:
 
-- **App deploy (rare):** GH Pages serves `index.html` as-is. Redeploys
-  only when the frontend code changes.
-- **Data refresh (daily):** the crawl workflow writes today's partition,
-  commits it to a `data` branch, runs `compact.py`, and publishes
-  `v_current.parquet` to a GitHub Release under a stable tag with
-  `gh release upload latest v_current.parquet --clobber`. `index.html`
-  would point at that release's stable download URL instead of the local
-  `data/v_current.parquet` path it uses today.
-
-Not built yet — this experiment is currently local-only, and the example
-workflow deliberately isn't wired into `.github/workflows/` (it also needs
-a `data` branch and a `latest` release to exist, and Actions secrets/
-permissions this repo doesn't have configured yet). What **is** done and
-verified: `pwo crawl`/`pwo dotgov --out-parquet <path>` write a real crawl
-batch straight to Parquet with zero DB/MotherDuck involvement — see
-"Ingestion" below.
+- **App deploy (rare):** `.github/workflows/deploy-pages.yml` publishes
+  `site/` to GitHub Pages on every push to `main` that touches `site/**`.
+  Only needs to run when the frontend code changes.
+- **Data refresh (daily):** `.github/workflows/crawl-static.yml` writes
+  today's partition, commits it to the `data` branch, runs `compact.py`,
+  and publishes `v_current.parquet`/`tech_top.json` to the `latest`
+  GitHub Release with `--clobber`. The site fetches that release's stable
+  download URL (see `DATA_BASE_URL` in `static/duckdb-client.js`) instead
+  of a local path, so a data refresh never triggers an app redeploy.
 
 ## Ingestion — the crawler itself, MotherDuck-free
 
@@ -197,14 +194,15 @@ path didn't require touching the crawler at all:
   casts make every partition's schema identical regardless of which
   columns happen to be all-NULL in a given day's batch.
 - **`cli.py`** — `pwo crawl`/`pwo dotgov` gained a `--out-parquet PATH`
-  flag. Omit it and behavior is 100% unchanged (writes to
-  MotherDuck/DuckDB exactly as today — this is what production's real
-  `.github/workflows/crawl.yml` still does, untouched). Pass it and the
-  command never opens a DB connection at all: results are collected in
-  memory and written once at the end.
+  flag. Omit it and behavior is unchanged (writes to MotherDuck/DuckDB) —
+  `.github/workflows/crawl.yml` still has that code path available via
+  manual `workflow_dispatch`, though its schedule is now disabled in favor
+  of `crawl-static.yml`. Pass `--out-parquet` and the command never opens
+  a DB connection at all: results are collected in memory and written
+  once at the end.
 - **`compact.py`** — now takes `--partitions-dir`/`--out-dir` (defaulting
   to the same local paths as before, so plain `uv run python
-  testmigration/compact.py` is unchanged) so a real workflow can point it
+  site/compact.py` is unchanged) so `crawl-static.yml` can point it
   at a checked-out `data` branch. Also switched to
   `read_parquet(glob, union_by_name=true)` plus an explicit `EXCLUDE` of
   nine legacy `axe_*` columns — the historical MotherDuck-sourced
@@ -223,11 +221,10 @@ still worked against the result with zero console errors. Also ran a
 command production's actual crawl.yml uses works the same way, including
 the failure path (a DNS-failed domain still writes a valid row).
 
-**Still not done:** no workflow has actually run this in CI — see
-"Deploying to GH Pages" above for what's missing before `example-crawl-
-workflow.yml` could be copied into `.github/workflows/` for real.
-`.github/workflows/crawl.yml` (production) is completely untouched and
-still writes to MotherDuck on its existing schedule.
+See "Deploying to GH Pages" above for the workflows that run this for
+real. `.github/workflows/crawl.yml` (the old MotherDuck-writing crawl)
+still exists as a manual `workflow_dispatch` fallback, but its schedule
+is disabled — `crawl-static.yml` is the production path now.
 
 ## What this does and doesn't prove
 

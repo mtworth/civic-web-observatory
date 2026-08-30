@@ -1,44 +1,39 @@
-# NOT an active workflow — lives in testmigration/, not .github/workflows/,
-# so GitHub Actions never picks it up. This is a sketch of what would
-# replace .github/workflows/crawl.yml if the MotherDuck migration goes
-# ahead — every command below is real and has been run locally (see
-# testmigration/README.md's "Ingestion" section), but the workflow itself
-# has never executed in CI: it needs a `data` branch to exist, a GitHub
-# Release tag to publish to, and Actions permissions/secrets this sketch
-# doesn't set up. Copy into .github/workflows/, create the `data` branch
-# and an empty `latest` release, and confirm those pieces before enabling.
+# Daily crawl for the static (GH Pages) site — replaces the MotherDuck-
+# writing crawl.yml, which is now schedule-disabled (see that file).
 #
 # Design: the daily slice logic (SHA-256(domain) % 90 == today % 90,
-# copied verbatim from the real .github/workflows/crawl.yml) is a pure
-# function of the date — it needs no prior state, so nothing here depends
-# on reading yesterday's data before deciding what to crawl today. What
-# *does* need continuity across runs is the accumulated observation
-# history, handled by two separate artifacts with very different lifetimes:
+# identical to crawl.yml's) is a pure function of the date — it needs no
+# prior state, so nothing here depends on reading yesterday's data before
+# deciding what to crawl today. What *does* need continuity across runs is
+# the accumulated observation history, handled by two artifacts with very
+# different lifetimes:
 #
 #   1. Raw partitions — one small immutable Parquet file per crawl day,
-#      committed to a dedicated `data` branch. ~500KB/day at current
-#      volume. Committing new small immutable files is normal git growth,
-#      not the "rewrite a big blob every day" bloat problem a single
-#      monolithic committed file would cause.
+#      committed to the `data` branch. ~500KB/day at current volume.
+#      Committing new small immutable files is normal git growth, not the
+#      "rewrite a big blob every day" bloat problem a single monolithic
+#      committed file would cause.
 #
 #   2. Compacted snapshot — v_current.parquet, latest-per-domain,
-#      recomputed from all partitions on every run and re-uploaded to a
-#      GitHub Release under a stable "latest" tag with `--clobber`.
-#      Release assets aren't part of git history, so this file can be
-#      fully replaced every day forever without the repo growing from it.
-#      The static site always fetches the same stable release URL, so
-#      GH Pages itself only needs to redeploy when the *app* changes, not
-#      when the *data* changes.
+#      recomputed from all partitions on every run and re-uploaded to the
+#      `latest` GitHub Release with `--clobber`. Release assets aren't
+#      part of git history, so this file is fully replaced every day
+#      forever without the repo growing from it. The static site fetches
+#      that same stable release URL, so GH Pages itself only needs to
+#      redeploy when the *app* changes, not when the *data* changes.
 
-name: crawl (example)
+name: Daily Crawl (static)
 
 on:
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write  # push to the data branch, upload release assets
+
 concurrency:
-  group: crawl
+  group: crawl-static
   cancel-in-progress: false  # never overlap two crawl runs against the same data branch
 
 jobs:
@@ -56,10 +51,8 @@ jobs:
           enable-cache: true
       - run: uv sync
 
-      # Identical slicing to the real .github/workflows/crawl.yml — pure
-      # function of today's date, no prior state needed.
+      # Identical slicing to crawl.yml — pure function of today's date.
       - name: Slice today's domains
-        id: slice
         run: |
           python3 - <<'EOF'
           import csv, hashlib, datetime
@@ -87,8 +80,7 @@ jobs:
           MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
 
       # No MOTHERDUCK_TOKEN — --out-parquet writes straight to a file,
-      # never opens a database connection. Verified locally against both
-      # `pwo crawl` and `pwo dotgov`.
+      # never opens a database connection.
       - name: Crawl today's slice
         run: |
           uv run pwo crawl /tmp/daily_slice.csv --concurrency 25 --timeout 10 \
@@ -106,12 +98,11 @@ jobs:
             commit -m "observations: $(date +%F)"
           git push origin HEAD:data
 
-      # compact.py's --partitions-dir/--out-dir let it run against the
-      # checked-out data branch instead of testmigration/data/ (its
-      # default when run locally by hand).
+      # site/compact.py's --partitions-dir/--out-dir point it at the
+      # checked-out data branch instead of its local-dev default (site/data).
       - name: Compact all partitions into v_current
         run: |
-          uv run python testmigration/compact.py \
+          uv run python site/compact.py \
             --partitions-dir /tmp/data-branch/observations \
             --out-dir /tmp/compacted
 

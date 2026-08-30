@@ -10,7 +10,7 @@ where they currently live) and split them out by day to prove the
 partition + compaction design works end-to-end.
 
 Usage:
-    uv run python testmigration/partition_export.py
+    uv run python site/partition_export.py
 """
 
 import os

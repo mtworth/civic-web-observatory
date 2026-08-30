@@ -1,8 +1,11 @@
 name: Daily Crawl
 
+# Schedule disabled: superseded by crawl-static.yml, which crawls straight
+# to Parquet for the static (GH Pages) site instead of writing to
+# MotherDuck. Left as manual-only (workflow_dispatch) for now as a rollback
+# path if something's wrong with the new pipeline — safe to delete once
+# that's been running cleanly for a while.
 on:
-  schedule:
-    - cron: '0 6 * * *'   # 6am UTC daily
   workflow_dispatch:
     inputs:
       bucket:

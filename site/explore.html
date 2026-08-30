@@ -95,7 +95,7 @@
 </footer>
 
 <script type="module">
-import { initDb, formatInt, escapeSqlLiteral, rowsToObjects } from "./static/duckdb-client.js";
+import { initDb, formatInt, escapeSqlLiteral, rowsToObjects, DATA_BASE_URL } from "./static/duckdb-client.js";
 
 const PAGE_SIZE = 25;
 const SIDEBAR_LIMIT = 6; // keep each filter group short — full breakdowns live on Insights
@@ -182,7 +182,7 @@ async function techRowsFor(searchTerm) {
   // outside this precomputed set), so only the default view is short-circuited.
   if (!term) {
     if (!techTopCache) {
-      const res = await fetch("data/tech_top.json");
+      const res = await fetch(`${DATA_BASE_URL}/tech_top.json`);
       techTopCache = res.ok ? await res.json() : [];
     }
     return techTopCache;

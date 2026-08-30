@@ -1,10 +1,21 @@
-// Shared DuckDB-WASM bootstrap for the static prototype. Every page
-// (index.html, explore.html, domain.html) imports initDb() and gets back a
-// connection with a `v_current` view already registered over the Parquet
-// snapshot — same relationship pwo/api.py has to the real v_current view,
-// just computed client-side instead of read from MotherDuck.
+// Shared DuckDB-WASM bootstrap. Every page (index.html, explore.html,
+// domain.html) imports initDb() and gets back a connection with a
+// `v_current` view already registered over the Parquet snapshot — same
+// relationship pwo/api.py has to the real v_current view, just computed
+// client-side instead of read from MotherDuck.
 
 import * as duckdb from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm";
+
+// Data refresh is decoupled from app deploy: the daily crawl workflow
+// re-uploads v_current.parquet/tech_top.json to the `latest` GitHub
+// Release, so the site never needs to redeploy just because the data
+// changed. Locally, keep reading the checked-in-but-gitignored
+// site/data/ path instead, so `python -m http.server` + compact.py still
+// works exactly as before this pointed at a real release.
+export const DATA_BASE_URL =
+  location.hostname === "localhost" || location.hostname === "127.0.0.1"
+    ? "data"
+    : "https://github.com/mtworth/publicwebobservatory/releases/download/latest";
 
 let dbPromise = null;
 
@@ -27,7 +38,7 @@ async function boot() {
 
   await db.registerFileURL(
     "v_current.parquet",
-    new URL("./data/v_current.parquet", location.href).href,
+    new URL(`${DATA_BASE_URL}/v_current.parquet`, location.href).href,
     duckdb.DuckDBDataProtocol.HTTP,
     false
   );

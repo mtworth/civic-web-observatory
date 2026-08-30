@@ -1,10 +1,10 @@
 """
 Exports the data this experiment needs from MotherDuck into static Parquet
-files under testmigration/data/. Re-run any time you want to refresh the
+files under site/data/. Re-run any time you want to refresh the
 snapshot the static prototype serves.
 
 Usage:
-    uv run python testmigration/export_data.py
+    uv run python site/export_data.py
 """
 
 import os

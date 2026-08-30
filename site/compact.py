@@ -22,8 +22,8 @@ is untouched — this only short-circuits the common case: the default view
 before anyone has typed anything.
 
 Usage:
-    uv run python testmigration/compact.py
-    uv run python testmigration/compact.py --partitions-dir /path/to/observations --out-dir /path/to/data
+    uv run python site/compact.py
+    uv run python site/compact.py --partitions-dir /path/to/observations --out-dir /path/to/data
 """
 
 import argparse
@@ -40,11 +40,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--partitions-dir", default=None,
-        help="Directory of daily *.parquet partitions (default: testmigration/data/observations)",
+        help="Directory of daily *.parquet partitions (default: site/data/observations)",
     )
     parser.add_argument(
         "--out-dir", default=None,
-        help="Directory to write v_current.parquet and tech_top.json into (default: testmigration/data)",
+        help="Directory to write v_current.parquet and tech_top.json into (default: site/data)",
     )
     args = parser.parse_args()
 
