@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Civic Web Index — static prototype</title>
+<meta name="description" content="Mapping the digital infrastructure of the American civic web — HTTPS, hosting, accessibility, and more. Static GH-Pages prototype, no server.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/style.css">
+<style>
+  .proto-banner {
+    background: #fff8e1; border-bottom: 1px solid var(--gray-2);
+    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
+  }
+</style>
+</head>
+<body>
+
+<div class="proto-banner">Static prototype — data loaded client-side from a Parquet snapshot via DuckDB-WASM, no server. <span id="load-status">Loading…</span></div>
+
+<header class="site-header">
+  <a class="wordmark" href="index.html">Civic Web Index</a>
+  <nav aria-label="Primary">
+    <ul class="site-nav">
+      <li><a href="explore.html">Explore</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+    </ul>
+  </nav>
+</header>
+<hr class="header-rule">
+
+<main>
+<div class="landing">
+
+  <div class="live-badge skel" id="live-badge">227,446 domains monitored &middot; updated daily</div>
+
+  <div class="landing-hero">
+    <h1>Mapping the <strong>digital infrastructure</strong> of the American civic web</h1>
+    <p class="landing-meta">
+      Tracking availability, security posture, hosting, and accessibility across
+      <strong id="hero-total" class="skel">227,446</strong> government and nonprofit domains &mdash;
+      recrawled on a rolling 90-day cycle, no gaps in the record.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="explore.html">Explore domains</a>
+      <a class="btn-ghost" href="insights.html">View insights &rarr;</a>
+    </div>
+  </div>
+
+  <div class="stat-strip" id="stat-strip">
+    <div class="stat-tile accent"><div class="n skel" id="stat-https">83.5%</div><div class="l">HTTPS available</div><div class="bar-track"><span class="bar-fill" id="bar-https" style="width:0%"></span></div></div>
+    <div class="stat-tile warn"><div class="n skel" id="stat-blocked">41,704</div><div class="l">Blocked / challenged</div><div class="bar-track"><span class="bar-fill" id="bar-blocked" style="width:0%"></span></div></div>
+    <div class="stat-tile"><div class="n skel" id="stat-parked">5,988</div><div class="l">Probably parked</div><div class="bar-track"><span class="bar-fill" id="bar-parked" style="width:0%"></span></div></div>
+    <div class="stat-tile"><div class="n skel" id="stat-total">227,446</div><div class="l">Domains tracked</div><div class="bar-track"><span class="bar-fill" id="bar-total" style="width:0%"></span></div></div>
+  </div>
+
+  <div class="feed-section">
+    <div class="feed-eyebrow"><span class="live-dot"></span> Recent observations</div>
+    <ul class="feed-list" id="feed-list">
+      <li class="skel" style="height:13px; margin:.55rem 0;"></li>
+      <li class="skel" style="height:13px; margin:.55rem 0;"></li>
+      <li class="skel" style="height:13px; margin:.55rem 0;"></li>
+      <li class="skel" style="height:13px; margin:.55rem 0;"></li>
+      <li class="skel" style="height:13px; margin:.55rem 0;"></li>
+      <li class="skel" style="height:13px; margin:.55rem 0;"></li>
+    </ul>
+  </div>
+
+</div>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
+  <ul class="footer-links">
+    <li><a href="README.md">README</a></li>
+  </ul>
+</footer>
+
+<script type="module">
+  import { initDb, formatInt, timeAgo, signalFor, rowsToObjects } from "./static/duckdb-client.js";
+
+  const loadStatus = document.getElementById("load-status");
+  const liveBadge = document.getElementById("live-badge");
+  const heroTotal = document.getElementById("hero-total");
+  const feedList = document.getElementById("feed-list");
+
+  function unskeleton(el) {
+    el.classList.remove("skel");
+    el.classList.add("fade-in");
+  }
+
+  function renderItem(d) {
+    const li = document.createElement("li");
+    li.className = "feed-item entering";
+    const a = document.createElement("a");
+    a.href = `domain.html?d=${encodeURIComponent(d.domain)}`;
+    const domainSpan = document.createElement("span");
+    domainSpan.className = "feed-domain";
+    domainSpan.textContent = d.domain;
+    const [signalText, signalCls] = signalFor(d);
+    const signalSpan = document.createElement("span");
+    signalSpan.className = "feed-signal" + (signalCls ? " " + signalCls : "");
+    signalSpan.textContent = signalText;
+    const ageSpan = document.createElement("span");
+    ageSpan.className = "feed-age";
+    ageSpan.textContent = timeAgo(d.checked_at);
+    a.append(domainSpan, signalSpan, ageSpan);
+    li.appendChild(a);
+    return li;
+  }
+
+  function setStat(elId, barId, text, pct) {
+    const el = document.getElementById(elId);
+    el.textContent = text;
+    unskeleton(el);
+    if (barId) document.getElementById(barId).style.width = pct + "%";
+  }
+
+  async function main() {
+    const { conn } = await initDb();
+
+    const totalResult = await conn.query(`SELECT count(*) AS n FROM v_current`);
+    const total = Number(totalResult.toArray()[0].n);
+    heroTotal.textContent = formatInt(total);
+    unskeleton(heroTotal);
+    liveBadge.textContent = `${formatInt(total)} domains monitored · updated daily`;
+    unskeleton(liveBadge);
+    loadStatus.textContent = `Loaded ${formatInt(total)} domains from a static Parquet file.`;
+
+    const statsResult = await conn.query(`
+      SELECT
+        CAST(sum(CASE WHEN https_available THEN 1 ELSE 0 END) AS DOUBLE) AS https_n,
+        CAST(sum(CASE WHEN homepage_block_type IS NOT NULL AND homepage_block_type != 'none' THEN 1 ELSE 0 END) AS DOUBLE) AS blocked_n,
+        CAST(sum(CASE WHEN is_probably_parked THEN 1 ELSE 0 END) AS DOUBLE) AS parked_n
+      FROM v_current
+    `);
+    const s = statsResult.toArray()[0];
+    const httpsPct = (s.https_n / total) * 100;
+    setStat("stat-https", "bar-https", httpsPct.toFixed(1) + "%", httpsPct);
+    setStat("stat-blocked", "bar-blocked", formatInt(s.blocked_n), (s.blocked_n / total) * 100);
+    setStat("stat-parked", "bar-parked", formatInt(s.parked_n), (s.parked_n / total) * 100);
+    setStat("stat-total", "bar-total", formatInt(total), 100);
+
+    const recentResult = await conn.query(`
+      SELECT domain, org_name, org_type, checked_at, collection_status,
+             homepage_block_type, https_available, tls_valid,
+             tls_days_until_expiry, llms_txt_available, dns_resolves,
+             technologies, is_probably_parked
+      FROM v_current
+      USING SAMPLE 60
+    `);
+    const items = rowsToObjects(recentResult).slice(0, 8);
+    feedList.innerHTML = "";
+    items.forEach((d) => feedList.appendChild(renderItem(d)));
+  }
+
+  main().catch((err) => {
+    console.error(err);
+    loadStatus.textContent = `Failed to load: ${err.message}`;
+  });
+</script>
+
+</body>
+</html>

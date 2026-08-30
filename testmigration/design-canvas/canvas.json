@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 1220 },
+    { "file": "Profile.dc.html", "x": 1560, "y": 0, "w": 1440, "h": 1020 },
+    { "file": "Insights.dc.html", "x": 3120, "y": 0, "w": 1440, "h": 1360 }
+  ],
+  "annotations": [
+    { "id": "note-loading", "x": 0, "y": -160, "w": 480, "text": "All three pages load data client-side via SQL against a Parquet file (DuckDB-WASM) - no server round trip. Main and Insights have a \"Loading state\" tweak above the artboard: toggle it to see the skeleton-shimmer state that should show while the query resolves, before fading up into the real content (reuses the existing fadeUp keyframe already in production CSS)." },
+    { "id": "note-profile", "x": 1560, "y": -160, "w": 420, "text": "Real data for 13thjudicialil.gov. Added a status strip under the header for at-a-glance scanning - status/HTTPS/blocking/TLS expiry - before the reader has to parse the full field-grid. Single-domain lookups are fast enough that a skeleton flash (not shown as a toggle here) should be brief, not a stall." },
+    { "id": "note-insights", "x": 3120, "y": -160, "w": 420, "text": "New page - the old insights.html was retired when Explore's facets replaced it. Reuses the exact facet-row/track/fill visual language from Explore for consistency rather than introducing chart components. Real breakdown data from the current snapshot." }
+  ],
+  "launch": { "view": "canvas" }
+}

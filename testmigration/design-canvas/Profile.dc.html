@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black:#111; --white:#fff; --gray-1:#f4f4f4; --gray-2:#e0e0e0; --gray-3:#767676; --gray-4:#555;
+      --fail:#c0392b; --warn:#b9770e; --ok:#2a9d2a; --mono:'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--white); color:var(--black); font-family:'Inter', sans-serif; font-size:14px; font-weight:400; line-height:1.5; -webkit-font-smoothing:antialiased; }
+    a { color: var(--black); }
+
+    .site-header { max-width: 900px; margin: 0 auto; padding: 1.75rem 1.5rem; display:flex; align-items:baseline; justify-content:space-between; }
+    .wordmark { font-family: var(--mono); font-size: 13px; color: var(--black); text-decoration:none; letter-spacing:.01em; }
+    .site-nav { display:flex; gap:1.75rem; list-style:none; align-items:baseline; margin:0; padding:0; }
+    .site-nav a { font-size:13px; color:var(--gray-3); text-decoration:none; }
+    .site-nav a.active { color:var(--black); font-weight:500; }
+    .header-rule { max-width:900px; margin:0 auto; border:none; border-top:1px solid var(--gray-2); }
+
+    .domain-profile { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+    .domain-back { font-size:12px; color:var(--gray-3); text-decoration:none; display:inline-block; padding:1.5rem 0 0; }
+
+    .domain-header { padding: 1.1rem 0 1.4rem; border-bottom: 1px solid var(--gray-2); margin-bottom: 1.1rem; }
+    .domain-name { font-family: var(--mono); font-size: 23px; font-weight: 500; letter-spacing:-.01em; margin-bottom: .4rem; }
+    .domain-sub { font-size: 13px; color: var(--gray-3); }
+    .domain-sub strong { color: var(--gray-4); font-weight: 500; }
+
+    .status-strip { display:flex; gap:1.75rem; flex-wrap:wrap; padding:.9rem 1.1rem; background:var(--gray-1); border-radius:3px; margin: 0 0 2.5rem; }
+    .status-strip .item { display:flex; align-items:center; gap:.5rem; font-family:var(--mono); font-size:12px; color:var(--gray-4); }
+    .status-strip .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .status-strip .dot.ok { background:var(--ok); }
+    .status-strip .dot.warn { background:var(--warn); }
+    .status-strip .dot.fail { background:var(--fail); }
+    .status-strip .item strong { color:var(--black); font-weight:500; }
+
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.25rem 2rem; margin-bottom: 2.5rem; }
+    .field-group-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-3); margin-bottom: .8rem; padding-bottom: .55rem; border-bottom: 1px solid var(--gray-2); }
+    .field-row { display: flex; justify-content: space-between; gap: .5rem; padding: .32rem 0; font-size: 12.5px; }
+    .field-key { color: var(--gray-3); }
+    .field-val { font-family: var(--mono); color: var(--black); text-align: right; }
+    .field-val.ok { color: var(--ok); }
+    .field-val.fail { color: var(--fail); }
+
+    .tech-list { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .tech-tag { font-family:var(--mono); font-size:11px; background:var(--gray-1); padding:.25rem .55rem; border-radius:2px; color:var(--gray-4); }
+
+    .history-note { font-size: 12.5px; color: var(--gray-3); border-top:1px solid var(--gray-2); padding-top:1.25rem; line-height:1.6; max-width:60ch; }
+
+    /* skeleton */
+    .skel { background: linear-gradient(90deg, var(--gray-1) 25%, var(--gray-2) 37%, var(--gray-1) 63%); background-size:400% 100%; animation:shimmer 1.7s ease-in-out infinite; border-radius:2px; }
+    @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:0 0} }
+
+    .site-footer { border-top:1px solid var(--gray-2); max-width:900px; margin:0 auto; padding:1.25rem 1.5rem 2.5rem; display:flex; align-items:center; justify-content:space-between; }
+    .footer-copy { font-size:12px; color:var(--gray-3); }
+  </style>
+</helmet>
+
+<header class="site-header">
+  <a class="wordmark" href="#">Civic Web Index</a>
+  <ul class="site-nav">
+    <li><a href="#" class="active">Explore</a></li>
+    <li><a href="#">Insights</a></li>
+    <li><a href="#">Reports</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+</header>
+<hr class="header-rule">
+
+<main class="domain-profile">
+  <a class="domain-back" href="#">&larr; Back to explore</a>
+
+  <div class="domain-header">
+    <div class="domain-name">13thjudicialil.gov</div>
+    <div class="domain-sub"><strong>13th Judicial Circuit</strong> &middot; state or territory &middot; IL &middot; last checked Jul 27, 2026, 9:46 AM</div>
+  </div>
+
+  <div class="status-strip">
+    <span class="item"><span class="dot ok"></span> Status: <strong>ok</strong></span>
+    <span class="item"><span class="dot ok"></span> HTTPS: <strong>valid TLS</strong></span>
+    <span class="item"><span class="dot ok"></span> Blocking: <strong>none</strong></span>
+    <span class="item"><span class="dot ok"></span> TLS expires in <strong>75d</strong></span>
+  </div>
+
+  <div class="field-grid">
+    <div>
+      <div class="field-group-title">Status &amp; identity</div>
+      <div class="field-row"><span class="field-key">Status</span><span class="field-val">ok</span></div>
+      <div class="field-row"><span class="field-key">Block type</span><span class="field-val">&mdash;</span></div>
+      <div class="field-row"><span class="field-key">Sector</span><span class="field-val">&mdash;</span></div>
+      <div class="field-row"><span class="field-key">Source</span><span class="field-val">cisa_dotgov</span></div>
+    </div>
+    <div>
+      <div class="field-group-title">DNS &amp; hosting</div>
+      <div class="field-row"><span class="field-key">Primary IP</span><span class="field-val">199.96.4.179</span></div>
+      <div class="field-row"><span class="field-key">ASN</span><span class="field-val">19065</span></div>
+      <div class="field-row"><span class="field-key">ASN org</span><span class="field-val">Levi, Ray &amp; Shoup</span></div>
+      <div class="field-row"><span class="field-key">Nameserver hint</span><span class="field-val">Levi, Ray &amp; Shoup</span></div>
+      <div class="field-row"><span class="field-key">CNAME hint</span><span class="field-val">&mdash;</span></div>
+    </div>
+    <div>
+      <div class="field-group-title">HTTPS / TLS</div>
+      <div class="field-row"><span class="field-key">HTTPS available</span><span class="field-val ok">yes</span></div>
+      <div class="field-row"><span class="field-key">Redirects to HTTPS</span><span class="field-val ok">yes</span></div>
+      <div class="field-row"><span class="field-key">TLS valid</span><span class="field-val ok">yes</span></div>
+      <div class="field-row"><span class="field-key">TLS issuer</span><span class="field-val">Let's Encrypt</span></div>
+      <div class="field-row"><span class="field-key">TLS days until expiry</span><span class="field-val">75</span></div>
+    </div>
+    <div>
+      <div class="field-group-title">Machine-readable files</div>
+      <div class="field-row"><span class="field-key">robots.txt</span><span class="field-val ok">yes</span></div>
+      <div class="field-row"><span class="field-key">sitemap.xml</span><span class="field-val ok">yes</span></div>
+      <div class="field-row"><span class="field-key">llms.txt</span><span class="field-val fail">no</span></div>
+    </div>
+    <div>
+      <div class="field-group-title">Response</div>
+      <div class="field-row"><span class="field-key">Status code</span><span class="field-val">200</span></div>
+      <div class="field-row"><span class="field-key">Response time</span><span class="field-val">1350ms</span></div>
+      <div class="field-row"><span class="field-key">HTTP available</span><span class="field-val ok">yes</span></div>
+    </div>
+    <div>
+      <div class="field-group-title">Technologies detected (6)</div>
+      <div class="tech-list">
+        <span class="tech-tag">Cloudflare</span>
+        <span class="tech-tag">Microsoft ASP.NET</span>
+        <span class="tech-tag">Modernizr</span>
+        <span class="tech-tag">cdnjs</span>
+        <span class="tech-tag">jQuery</span>
+        <span class="tech-tag">jQuery CDN</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="history-note">Full observation history isn't shipped to the static snapshot — this shows the latest observation only. A skeleton state (shimmering field-grid, matching the loading treatment on Insights) should precede this content while the SQL query against the Parquet snapshot resolves — typically well under 100ms for a single-domain lookup, so it should read as a quick flash rather than a stall.</p>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">civicwebindex.org</span>
+</footer>
+</x-dc>
+<script data-dc-script>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

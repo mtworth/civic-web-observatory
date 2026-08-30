@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explore — Civic Web Index static prototype</title>
+<meta name="description" content="Explore government and nonprofit domains by technology, hosting, blocking, HTTPS/TLS, and machine-readable files. Static GH-Pages prototype, no server.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/style.css">
+<style>
+  .proto-banner {
+    background: #fff8e1; border-bottom: 1px solid var(--gray-2);
+    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
+  }
+  /* this page's content is wider (1160px) than the shared 900px header/footer — match them */
+  .site-header, .header-rule, .site-footer { max-width: 1160px; }
+</style>
+</head>
+<body>
+
+<div class="proto-banner">Static prototype — filters, search, and pagination all run as SQL against a Parquet file in your browser. <span id="load-status">Loading…</span></div>
+
+<header class="site-header">
+  <a class="wordmark" href="index.html">Civic Web Index</a>
+  <nav aria-label="Primary">
+    <ul class="site-nav">
+      <li><a href="explore.html" class="active" aria-current="page">Explore</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+    </ul>
+  </nav>
+</header>
+<hr class="header-rule">
+
+<main>
+<div class="explore">
+
+  <div class="explore-context">
+    <div class="explore-context-left">
+      <h1>Explore</h1>
+      <span class="explore-context-sep" aria-hidden="true">&middot;</span>
+      <span class="explore-context-total" id="ctx-total">… domains</span>
+      <span class="explore-context-sep" aria-hidden="true">&middot;</span>
+      <span class="explore-context-updated">snapshot from a static Parquet file</span>
+    </div>
+  </div>
+
+  <form class="filter-bar" id="filter-bar" onsubmit="return false">
+    <label class="sr-only" for="explore-search">Search domains or organizations</label>
+    <input id="explore-search" class="filter-input" type="text" placeholder="Search domains or organizations…">
+    <label class="sr-only" for="explore-org-type">Entity type</label>
+    <select id="explore-org-type" class="filter-select"><option value="">All entity types</option></select>
+    <button class="btn-ghost" type="button" id="clear-all" style="font-size:13px">Clear all</button>
+  </form>
+
+  <div class="facet-pill-row" id="facet-pill-row">
+    <span class="facet-pill-empty">No filters applied</span>
+  </div>
+
+  <div class="explore-layout">
+    <aside class="filters-sidebar" id="filters-sidebar" aria-label="Filters"></aside>
+
+    <section aria-labelledby="records-heading" class="explore-records">
+      <div class="explore-records-head">
+        <div>
+          <p class="eyebrow">Matching records</p>
+          <h2 id="records-heading">All observed domains</h2>
+        </div>
+        <span class="explore-records-count" id="records-count">— shown</span>
+      </div>
+
+      <div class="browse-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Domain / organization</th>
+            <th>Type</th>
+            <th>State</th>
+            <th>HTTPS / TLS</th>
+            <th>Status</th>
+            <th style="text-align:right"><span class="sr-only">View</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows-body">
+          <tr class="empty-row"><td colspan="6">Loading…</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <div class="table-foot">
+        <span class="page-count" id="page-count">—</span>
+        <div class="page-btns">
+          <a class="page-btn" href="#" id="prev-btn">&larr; Prev</a>
+          <a class="page-btn" href="#" id="next-btn">Next &rarr;</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</div>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
+  <ul class="footer-links">
+    <li><a href="README.md">README</a></li>
+  </ul>
+</footer>
+
+<script type="module">
+import { initDb, formatInt, escapeSqlLiteral, rowsToObjects } from "./static/duckdb-client.js";
+
+const PAGE_SIZE = 25;
+const SIDEBAR_LIMIT = 6; // keep each filter group short — full breakdowns live on Insights
+const TECH_LIST_LIMIT = 12; // technology stack: more headroom, scrollable, plus a search box below
+
+const FILTER_GROUPS = [
+  ["collection", "Collection status"],
+  ["security", "HTTPS & TLS"],
+  ["blocking", "Blocking & access"],
+  ["files", "Machine-readable files"],
+  ["hosting", "Hosting & nameservers"],
+  ["technology", "Technology stack", { searchable: true, scrollable: true }],
+];
+
+let conn;
+let page = 0;
+let totalRows = 0;
+let loadToken = 0; // guards against overlapping loadRows() calls resolving out of order
+let techToken = 0; // guards the technology panel against the initial default fetch and a search fetch resolving out of order
+let activeFacets = {}; // category -> { value, label }
+
+const loadStatus = document.getElementById("load-status");
+const ctxTotal = document.getElementById("ctx-total");
+const recordsTitle = document.getElementById("records-heading");
+const recordsCount = document.getElementById("records-count");
+const rowsBody = document.getElementById("rows-body");
+const pageCount = document.getElementById("page-count");
+const prevBtn = document.getElementById("prev-btn");
+const nextBtn = document.getElementById("next-btn");
+const searchEl = document.getElementById("explore-search");
+const orgTypeEl = document.getElementById("explore-org-type");
+const pillRow = document.getElementById("facet-pill-row");
+const sidebarEl = document.getElementById("filters-sidebar");
+
+function facetClause(category, value) {
+  const v = escapeSqlLiteral(value);
+  if (category === "collection") return `collection_status = '${v}'`;
+  if (category === "security") {
+    if (value === "https") return `https_available = true`;
+    if (value === "redirect") return `http_redirects_to_https = true`;
+    if (value === "tls") return `tls_valid = true`;
+    if (value === "expiring") return `tls_days_until_expiry IS NOT NULL AND tls_days_until_expiry < 30`;
+    return null;
+  }
+  if (category === "blocking") {
+    if (value === "none") return `(homepage_block_type IS NULL OR homepage_block_type = 'none')`;
+    return `homepage_block_type = '${v}'`;
+  }
+  if (category === "technology") return `list_contains(technologies, '${v}')`;
+  if (category === "files") {
+    const col = { "robots.txt": "robots_txt_available", "sitemap.xml": "sitemap_xml_available", "llms.txt": "llms_txt_available" }[value];
+    return col ? `${col} = true` : null;
+  }
+  if (category === "hosting") return `nameserver_provider_hint = '${v}'`;
+  return null;
+}
+
+function buildWhere() {
+  const clauses = [];
+  const search = searchEl.value.trim();
+  if (search) {
+    const s = escapeSqlLiteral(search);
+    clauses.push(`(domain ILIKE '%${s}%' OR org_name ILIKE '%${s}%')`);
+  }
+  if (orgTypeEl.value) clauses.push(`org_type = '${escapeSqlLiteral(orgTypeEl.value)}'`);
+  for (const [category, sel] of Object.entries(activeFacets)) {
+    const fc = facetClause(category, sel.value);
+    if (fc) clauses.push(fc);
+  }
+  return clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+}
+
+// Queries the full distinct technology set every time — never a pre-capped
+// top-N — so every technology is reachable via search, not just the most
+// common ones. Empty search returns the top TECH_LIST_LIMIT by count.
+async function techRowsFor(searchTerm) {
+  const term = searchTerm.trim();
+  const whereClause = term
+    ? `WHERE technologies IS NOT NULL AND len(technologies) > 0 AND t ILIKE '%${escapeSqlLiteral(term)}%'`
+    : `WHERE technologies IS NOT NULL AND len(technologies) > 0`;
+  const limit = term ? 40 : TECH_LIST_LIMIT;
+  const r = await conn.query(`
+    SELECT t AS value, t AS label, count(*) AS count
+    FROM v_current, UNNEST(technologies) AS u(t)
+    ${whereClause}
+    GROUP BY 1, 2 ORDER BY 3 DESC LIMIT ${limit}
+  `);
+  return rowsToObjects(r);
+}
+
+async function facetRowsFor(category) {
+  if (category === "collection") {
+    const r = await conn.query(`SELECT COALESCE(collection_status,'unknown') AS value, COALESCE(collection_status,'unknown') AS label, count(*) AS count FROM v_current GROUP BY 1 ORDER BY 3 DESC LIMIT ${SIDEBAR_LIMIT}`);
+    return rowsToObjects(r).map((row) => ({ ...row, label: String(row.label).replaceAll("_", " ") }));
+  }
+  if (category === "security") {
+    const r = await conn.query(`
+      SELECT
+        sum(CASE WHEN https_available THEN 1 ELSE 0 END)::DOUBLE AS https_n,
+        sum(CASE WHEN http_redirects_to_https THEN 1 ELSE 0 END)::DOUBLE AS redirect_n,
+        sum(CASE WHEN tls_valid THEN 1 ELSE 0 END)::DOUBLE AS tls_n,
+        sum(CASE WHEN tls_days_until_expiry IS NOT NULL AND tls_days_until_expiry < 30 THEN 1 ELSE 0 END)::DOUBLE AS expiring_n
+      FROM v_current
+    `);
+    const row = rowsToObjects(r)[0];
+    return [
+      { value: "https", label: "HTTPS available", count: row.https_n },
+      { value: "redirect", label: "HTTP → HTTPS redirect", count: row.redirect_n },
+      { value: "tls", label: "Valid TLS certificate", count: row.tls_n },
+      { value: "expiring", label: "TLS expiring < 30d", count: row.expiring_n },
+    ];
+  }
+  if (category === "blocking") {
+    const r = await conn.query(`SELECT COALESCE(homepage_block_type,'none') AS bt, count(*) AS count FROM v_current GROUP BY 1 ORDER BY 2 DESC LIMIT ${SIDEBAR_LIMIT}`);
+    return rowsToObjects(r).map((row) => ({
+      value: row.bt,
+      label: row.bt === "none" ? "No blocking detected" : String(row.bt).replaceAll("_", " "),
+      count: row.count,
+    }));
+  }
+  if (category === "technology") return techRowsFor("");
+  if (category === "files") {
+    const r = await conn.query(`
+      SELECT
+        sum(CASE WHEN robots_txt_available THEN 1 ELSE 0 END)::DOUBLE AS robots_n,
+        sum(CASE WHEN sitemap_xml_available THEN 1 ELSE 0 END)::DOUBLE AS sitemap_n,
+        sum(CASE WHEN llms_txt_available THEN 1 ELSE 0 END)::DOUBLE AS llms_n
+      FROM v_current
+    `);
+    const row = rowsToObjects(r)[0];
+    return [
+      { value: "robots.txt", label: "robots.txt", count: row.robots_n },
+      { value: "sitemap.xml", label: "sitemap.xml", count: row.sitemap_n },
+      { value: "llms.txt", label: "llms.txt", count: row.llms_n },
+    ];
+  }
+  if (category === "hosting") {
+    const r = await conn.query(`SELECT COALESCE(nameserver_provider_hint,'unknown') AS value, COALESCE(nameserver_provider_hint,'unknown') AS label, count(*) AS count FROM v_current GROUP BY 1 ORDER BY 3 DESC LIMIT ${SIDEBAR_LIMIT}`);
+    return rowsToObjects(r);
+  }
+  return [];
+}
+
+function renderPills() {
+  const entries = Object.entries(activeFacets);
+  if (!entries.length) {
+    pillRow.innerHTML = `<span class="facet-pill-empty">No filters applied</span>`;
+    recordsTitle.textContent = "All observed domains";
+    return;
+  }
+  pillRow.innerHTML = entries.map(([category, sel]) => `
+    <span class="facet-pill" style="margin-right:.5rem">
+      <span class="facet-pill-category">${category}</span>${sel.label}
+      <a href="#" class="facet-pill-clear" data-clear-category="${category}" aria-label="Clear ${sel.label} filter">&times;</a>
+    </span>`).join("");
+  pillRow.querySelectorAll("[data-clear-category]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      delete activeFacets[el.dataset.clearCategory];
+      page = 0;
+      renderSidebar();
+      renderPills();
+      loadRows();
+    });
+  });
+  recordsTitle.textContent = entries.length === 1 ? `Domains with ${entries[0][1].label}` : `Domains matching ${entries.length} filters`;
+}
+
+function renderRowsInto(container, key, rows) {
+  const total = totalRows || 1;
+  const maxCount = Math.max(...rows.map((r) => Number(r.count)), 1);
+  if (!rows.length) {
+    container.innerHTML = `<p class="facet-empty">No matching values.</p>`;
+    return;
+  }
+  container.innerHTML = rows.map((r) => {
+    const count = Number(r.count);
+    const width = Math.max(2, Math.round((count / maxCount) * 100));
+    const selected = activeFacets[key] && activeFacets[key].value === String(r.value);
+    return `
+      <div class="facet-row${selected ? " selected" : ""}" data-facet-row data-value="${String(r.value).replace(/"/g, "&quot;")}" data-label="${String(r.label).replace(/"/g, "&quot;")}">
+        <span class="facet-row-label">${r.label}</span>
+        <span class="facet-row-track"><span class="facet-row-fill" style="width:${width}%"></span></span>
+        <span class="facet-row-count">${formatInt(count)}</span>
+      </div>`;
+  }).join("");
+  container.querySelectorAll("[data-facet-row]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const value = el.dataset.value;
+      const label = el.dataset.label;
+      if (activeFacets[key] && activeFacets[key].value === value) {
+        delete activeFacets[key]; // clicking the active row again clears it
+      } else {
+        activeFacets[key] = { value, label };
+      }
+      page = 0;
+      renderSidebar();
+      renderPills();
+      loadRows();
+    });
+  });
+}
+
+async function renderSidebar() {
+  sidebarEl.innerHTML = FILTER_GROUPS.map(([key, label, opts]) => `
+    <div class="filter-group" data-filter-group="${key}">
+      <div class="filter-group-head">
+        <h3>${label}</h3>
+        ${activeFacets[key] ? `<button type="button" class="filter-group-clear" data-clear-category="${key}">clear</button>` : ""}
+      </div>
+      ${opts && opts.searchable ? `
+        <label class="sr-only" for="tech-search">Search all technologies</label>
+        <input id="tech-search" class="tech-filter" type="text" placeholder="Search all technologies…" style="margin-bottom:.6rem;">
+      ` : ""}
+      <div class="facet-rows" data-rows${opts && opts.scrollable ? ` style="max-height:250px; overflow-y:auto;"` : ""}>Loading…</div>
+    </div>
+  `).join("");
+
+  sidebarEl.querySelectorAll("[data-clear-category]").forEach((el) => {
+    el.addEventListener("click", () => {
+      delete activeFacets[el.dataset.clearCategory];
+      page = 0;
+      renderSidebar();
+      renderPills();
+      loadRows();
+    });
+  });
+
+  const techSearchEl = document.getElementById("tech-search");
+  if (techSearchEl) {
+    let techDebounce;
+    techSearchEl.addEventListener("input", () => {
+      clearTimeout(techDebounce);
+      techDebounce = setTimeout(async () => {
+        const token = ++techToken;
+        const rows = await techRowsFor(techSearchEl.value);
+        if (token !== techToken) return; // a newer technology fetch has since started
+        const container = sidebarEl.querySelector(`[data-filter-group="technology"] [data-rows]`);
+        renderRowsInto(container, "technology", rows);
+      }, 200);
+    });
+  }
+
+  await Promise.all(FILTER_GROUPS.map(async ([key]) => {
+    const isTech = key === "technology";
+    const token = isTech ? ++techToken : null;
+    const rows = await facetRowsFor(key);
+    if (isTech && token !== techToken) return; // a search fetch has since started — don't clobber it
+    const container = sidebarEl.querySelector(`[data-filter-group="${key}"] [data-rows]`);
+    renderRowsInto(container, key, rows);
+  }));
+}
+
+function httpsTlsText(d) {
+  if (d.tls_valid) return ["HTTPS · valid TLS", "ok"];
+  if (d.https_available) return ["HTTPS · TLS issue", "fail"];
+  return ["No HTTPS", "fail"];
+}
+
+function statusClass(d) {
+  if (d.collection_status === "ok") return "s-ok";
+  if (d.homepage_block_type && d.homepage_block_type !== "none") return "s-blocked";
+  return "s-failed";
+}
+
+async function loadRows() {
+  const token = ++loadToken;
+  const where = buildWhere();
+  const countRes = await conn.query(`SELECT count(*) AS n FROM v_current ${where}`);
+  if (token !== loadToken) return; // a newer loadRows() call has since started — drop this stale one
+  totalRows = Number(rowsToObjects(countRes)[0].n);
+
+  const maxPage = Math.max(0, Math.ceil(totalRows / PAGE_SIZE) - 1);
+  if (page > maxPage) page = maxPage;
+
+  const result = await conn.query(`
+    SELECT domain, org_name, org_type, state, collection_status, homepage_block_type,
+           https_available, tls_valid, tls_days_until_expiry,
+           robots_txt_available, sitemap_xml_available, llms_txt_available,
+           nameserver_provider_hint, checked_at
+    FROM v_current
+    ${where}
+    ORDER BY domain
+    LIMIT ${PAGE_SIZE} OFFSET ${page * PAGE_SIZE}
+  `);
+  if (token !== loadToken) return; // stale — a newer request has already superseded this one
+  const items = rowsToObjects(result);
+
+  if (!items.length) {
+    rowsBody.innerHTML = `<tr class="empty-row"><td colspan="6">No domains match these filters.</td></tr>`;
+  } else {
+    rowsBody.innerHTML = items.map((d) => {
+      const [httpsText, httpsCls] = httpsTlsText(d);
+      return `
+        <tr>
+          <td>
+            <a class="td-domain" href="domain.html?d=${encodeURIComponent(d.domain)}">${d.domain}</a>
+            ${d.org_name ? `<div class="td-org">${d.org_name}</div>` : ""}
+          </td>
+          <td class="td-mono">${d.org_type || "—"}</td>
+          <td class="td-mono">${d.state || "—"}</td>
+          <td class="td-https ${httpsCls}">${httpsText}</td>
+          <td class="td-status ${statusClass(d)}">${d.collection_status || "—"}</td>
+          <td style="text-align:right"><a href="domain.html?d=${encodeURIComponent(d.domain)}" class="inspect-link">View &rarr;</a></td>
+        </tr>`;
+    }).join("");
+  }
+
+  const from = totalRows === 0 ? 0 : page * PAGE_SIZE + 1;
+  const to = Math.min(totalRows, (page + 1) * PAGE_SIZE);
+  pageCount.textContent = `Showing ${formatInt(from)}–${formatInt(to)} of ${formatInt(totalRows)}`;
+  recordsCount.textContent = `${formatInt(totalRows)} shown`;
+  prevBtn.classList.toggle("disabled", page === 0);
+  nextBtn.classList.toggle("disabled", page >= maxPage);
+}
+
+let searchDebounce;
+searchEl.addEventListener("input", () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => { page = 0; loadRows(); }, 250);
+});
+orgTypeEl.addEventListener("change", () => { page = 0; loadRows(); });
+document.getElementById("clear-all").addEventListener("click", () => {
+  searchEl.value = "";
+  orgTypeEl.value = "";
+  activeFacets = {};
+  page = 0;
+  renderSidebar();
+  renderPills();
+  loadRows();
+});
+prevBtn.addEventListener("click", (e) => { e.preventDefault(); if (page > 0) { page--; loadRows(); } });
+nextBtn.addEventListener("click", (e) => { e.preventDefault(); page++; loadRows(); });
+
+async function main() {
+  const boot = await initDb();
+  conn = boot.conn;
+
+  const totalRes = await conn.query(`SELECT count(*) AS n FROM v_current`);
+  totalRows = Number(rowsToObjects(totalRes)[0].n);
+  ctxTotal.textContent = `${formatInt(totalRows)} domains`;
+  loadStatus.textContent = `Loaded ${formatInt(totalRows)} domains from a static Parquet file.`;
+
+  const orgTypesRes = await conn.query(`SELECT COALESCE(org_type,'unknown') AS org_type, count(*) AS count FROM v_current GROUP BY 1 ORDER BY 2 DESC`);
+  rowsToObjects(orgTypesRes).forEach((r) => {
+    const opt = document.createElement("option");
+    opt.value = r.org_type;
+    opt.textContent = `${r.org_type} (${formatInt(r.count)})`;
+    orgTypeEl.appendChild(opt);
+  });
+
+  await renderSidebar();
+  renderPills();
+  await loadRows();
+}
+
+main().catch((err) => {
+  console.error(err);
+  loadStatus.textContent = `Failed to load: ${err.message}`;
+});
+</script>
+
+</body>
+</html>

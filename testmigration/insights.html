@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insights — Civic Web Index static prototype</title>
+<meta name="description" content="Analysis and thought leadership on the digital infrastructure of the American civic web. Static GH-Pages prototype, no server.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/style.css">
+<style>
+  .proto-banner {
+    background: #fff8e1; border-bottom: 1px solid var(--gray-2);
+    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
+  }
+</style>
+</head>
+<body>
+
+<div class="proto-banner">Static prototype — posts are plain Markdown files fetched and parsed in your browser, no server or CMS. <span id="load-status">Loading…</span></div>
+
+<header class="site-header">
+  <a class="wordmark" href="index.html">Civic Web Index</a>
+  <nav aria-label="Primary">
+    <ul class="site-nav">
+      <li><a href="explore.html">Explore</a></li>
+      <li><a href="insights.html" class="active" aria-current="page">Insights</a></li>
+      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+    </ul>
+  </nav>
+</header>
+<hr class="header-rule">
+
+<main>
+<div class="methods-body">
+  <h2>Insights</h2>
+  <p>Analysis and thought leadership on the digital infrastructure of the American civic web &mdash; written, not generated. For live filtering, see <a href="explore.html" style="color:var(--black)">Explore</a>.</p>
+
+  <div class="report-list" id="post-list">
+    <div class="skel" style="height:70px; margin:1.25rem 0;"></div>
+    <div class="skel" style="height:70px; margin:1.25rem 0;"></div>
+  </div>
+</div>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
+  <ul class="footer-links">
+    <li><a href="README.md">README</a></li>
+  </ul>
+</footer>
+
+<script type="module">
+import { fetchAllPosts } from "./static/insights-client.js";
+
+const loadStatus = document.getElementById("load-status");
+const postList = document.getElementById("post-list");
+
+async function main() {
+  const posts = await fetchAllPosts();
+  loadStatus.textContent = `Loaded ${posts.length} post${posts.length === 1 ? "" : "s"}.`;
+
+  if (!posts.length) {
+    postList.innerHTML = `<p style="color:var(--gray-3)">No posts published yet.</p>`;
+    return;
+  }
+
+  postList.innerHTML = posts.map((p) => `
+    <a class="report-card fade-in" href="insights-post.html?slug=${encodeURIComponent(p.slug)}">
+      <div class="report-date">${p.date}</div>
+      <div class="report-title">${p.title}</div>
+      <div class="report-summary">${p.summary}</div>
+    </a>
+  `).join("");
+}
+
+main().catch((err) => {
+  console.error(err);
+  loadStatus.textContent = `Failed to load: ${err.message}`;
+});
+</script>
+
+</body>
+</html>

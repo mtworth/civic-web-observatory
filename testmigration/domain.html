@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Domain — Civic Web Index static prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/style.css">
+<style>
+  .proto-banner {
+    background: #fff8e1; border-bottom: 1px solid var(--gray-2);
+    font-size: 12px; padding: 6px 24px; color: var(--gray-4);
+  }
+  .tech-list { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .tech-tag { font-family: var(--mono); font-size: 11px; background: var(--gray-1); padding: .2rem .5rem; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="proto-banner">Static prototype — this record is queried live from the Parquet snapshot by domain name. <span id="load-status">Loading…</span></div>
+
+<header class="site-header">
+  <a class="wordmark" href="index.html">Civic Web Index</a>
+  <nav aria-label="Primary">
+    <ul class="site-nav">
+      <li><a href="explore.html">Explore</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="#" aria-disabled="true" title="Not mirrored in this prototype">About</a></li>
+    </ul>
+  </nav>
+</header>
+<hr class="header-rule">
+
+<main>
+<div class="domain-profile" id="domain-profile">
+  <a class="domain-back" href="explore.html">&larr; Back to explore</a>
+  <p id="not-found" hidden>No observation found for this domain in the current snapshot.</p>
+
+  <div id="skeleton-body">
+    <div class="domain-header">
+      <div class="skel" style="height:23px; width:40%; margin-bottom:.5rem;"></div>
+      <div class="skel" style="height:13px; width:60%;"></div>
+    </div>
+    <div class="skel" style="height:36px; margin-bottom:2rem; border-radius:3px;"></div>
+    <div class="field-grid">
+      <div><div class="skel" style="height:11px; width:70%; margin-bottom:.8rem;"></div><div class="skel" style="height:60px;"></div></div>
+      <div><div class="skel" style="height:11px; width:70%; margin-bottom:.8rem;"></div><div class="skel" style="height:80px;"></div></div>
+      <div><div class="skel" style="height:11px; width:70%; margin-bottom:.8rem;"></div><div class="skel" style="height:80px;"></div></div>
+    </div>
+  </div>
+
+  <div id="profile-body" hidden>
+    <div class="domain-header">
+      <div class="domain-name" id="d-domain"></div>
+      <div class="domain-sub" id="d-sub"></div>
+    </div>
+
+    <div class="status-strip" id="status-strip"></div>
+
+    <div class="field-grid" id="field-grid"></div>
+
+    <p style="color: var(--gray-3); font-size: 13px; margin-top: 24px;">
+      Full observation history isn't shipped to the static snapshot (see
+      <a href="README.md">README</a>) — this shows the latest observation only.
+    </p>
+  </div>
+</div>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">testmigration prototype &middot; mirrors civicwebindex.org</span>
+  <ul class="footer-links">
+    <li><a href="README.md">README</a></li>
+  </ul>
+</footer>
+
+<script type="module">
+import { initDb, escapeSqlLiteral, rowsToObjects } from "./static/duckdb-client.js";
+
+const loadStatus = document.getElementById("load-status");
+const params = new URLSearchParams(location.search);
+const domain = params.get("d");
+
+function row(key, val, boolish) {
+  let text;
+  if (boolish) {
+    text = val ? "yes" : "no";
+  } else {
+    text = val === null || val === undefined || val === "" ? "—" : val;
+  }
+  const cls = boolish ? (val ? "ok" : "fail") : "";
+  return `<div class="field-row"><span class="field-key">${key}</span><span class="field-val ${cls}">${text}</span></div>`;
+}
+
+function statusDot(ok) {
+  return ok ? "ok" : "fail";
+}
+
+async function main() {
+  if (!domain) {
+    loadStatus.textContent = "No domain specified — append ?d=example.gov to the URL.";
+    document.getElementById("skeleton-body").hidden = true;
+    document.getElementById("not-found").hidden = false;
+    document.getElementById("not-found").textContent = "No domain specified — append ?d=example.gov to the URL.";
+    return;
+  }
+
+  const { conn } = await initDb();
+  const result = await conn.query(`SELECT * FROM v_current WHERE domain = '${escapeSqlLiteral(domain)}' LIMIT 1`);
+  const rows = rowsToObjects(result);
+  loadStatus.textContent = "Loaded snapshot.";
+
+  if (!rows.length) {
+    document.getElementById("skeleton-body").hidden = true;
+    document.getElementById("not-found").hidden = false;
+    return;
+  }
+
+  const d = rows[0];
+  document.getElementById("page-title").textContent = `${d.domain} — Civic Web Index static prototype`;
+  document.getElementById("d-domain").textContent = d.domain;
+
+  const checkedAt = d.checked_at ? new Date(d.checked_at).toLocaleString() : "unknown time";
+  document.getElementById("d-sub").textContent =
+    `${d.org_name || "No organization name on file"} · ${d.org_type || "unknown type"} · ${d.state || "unknown state"} · last checked ${checkedAt}`;
+
+  const strip = document.getElementById("status-strip");
+  const blockOk = !d.homepage_block_type || d.homepage_block_type === "none";
+  const expiryOk = d.tls_days_until_expiry === null || d.tls_days_until_expiry === undefined || d.tls_days_until_expiry >= 30;
+  strip.innerHTML = `
+    <span class="item"><span class="dot ${statusDot(d.collection_status === "ok")}"></span> Status: <strong>${d.collection_status || "unknown"}</strong></span>
+    <span class="item"><span class="dot ${statusDot(!!d.tls_valid)}"></span> HTTPS: <strong>${d.tls_valid ? "valid TLS" : d.https_available ? "TLS issue" : "unavailable"}</strong></span>
+    <span class="item"><span class="dot ${statusDot(blockOk)}"></span> Blocking: <strong>${blockOk ? "none" : d.homepage_block_type}</strong></span>
+    ${d.tls_days_until_expiry != null ? `<span class="item"><span class="dot ${statusDot(expiryOk)}"></span> TLS expires in <strong>${d.tls_days_until_expiry}d</strong></span>` : ""}
+  `;
+
+  const grid = document.getElementById("field-grid");
+  grid.innerHTML = `
+    <div>
+      <div class="field-group-title">Status &amp; identity</div>
+      ${row("Status", d.collection_status)}
+      ${row("Block type", d.homepage_block_type && d.homepage_block_type !== "none" ? d.homepage_block_type : null)}
+      ${row("Sector", d.sector)}
+      ${row("Source", d.source)}
+    </div>
+    <div>
+      <div class="field-group-title">DNS &amp; hosting</div>
+      ${row("Primary IP", d.primary_ip)}
+      ${row("ASN", d.host_asn)}
+      ${row("ASN org", d.host_asn_org)}
+      ${row("Nameserver hint", d.nameserver_provider_hint)}
+      ${row("CNAME hint", d.cname_provider_hint)}
+    </div>
+    <div>
+      <div class="field-group-title">HTTPS / TLS</div>
+      ${row("HTTPS available", d.https_available, true)}
+      ${row("Redirects to HTTPS", d.http_redirects_to_https, true)}
+      ${row("TLS valid", d.tls_valid, true)}
+      ${row("TLS issuer", d.tls_issuer)}
+      ${row("TLS days until expiry", d.tls_days_until_expiry)}
+    </div>
+    <div>
+      <div class="field-group-title">Machine-readable files</div>
+      ${row("robots.txt", d.robots_txt_available, true)}
+      ${row("sitemap.xml", d.sitemap_xml_available, true)}
+      ${row("llms.txt", d.llms_txt_available, true)}
+    </div>
+    <div>
+      <div class="field-group-title">Response</div>
+      ${row("Status code", d.homepage_status_code)}
+      ${row("Response time", d.homepage_response_time_ms != null ? d.homepage_response_time_ms + "ms" : null)}
+      ${row("HTTP available", d.http_available, true)}
+    </div>
+    ${(d.technologies && d.technologies.length) ? `
+    <div>
+      <div class="field-group-title">Technologies detected (${d.technologies.length})</div>
+      <div class="tech-list">${d.technologies.map((t) => `<span class="tech-tag">${t}</span>`).join("")}</div>
+    </div>` : ""}
+  `;
+
+  document.getElementById("skeleton-body").hidden = true;
+  const profileBody = document.getElementById("profile-body");
+  profileBody.hidden = false;
+  profileBody.classList.add("fade-in");
+}
+
+main().catch((err) => {
+  console.error(err);
+  loadStatus.textContent = `Failed to load: ${err.message}`;
+});
+</script>
+
+</body>
+</html>

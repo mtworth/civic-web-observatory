@@ -1,0 +1,3 @@
+data/*.parquet
+data/observations/*.parquet
+design-canvas/civic-web-index-redesign.html

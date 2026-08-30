@@ -1,0 +1,224 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black:#111; --white:#fff; --gray-1:#f4f4f4; --gray-2:#e0e0e0; --gray-3:#767676; --gray-4:#555;
+      --fail:#c0392b; --warn:#b9770e; --ok:#2a9d2a; --mono:'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--white); color:var(--black); font-family:'Inter', sans-serif; font-size:14px; font-weight:400; line-height:1.5; -webkit-font-smoothing:antialiased; }
+    a { color: var(--black); }
+
+    .site-header { max-width: 1160px; margin: 0 auto; padding: 1.75rem 1.5rem; display:flex; align-items:baseline; justify-content:space-between; }
+    .wordmark { font-family: var(--mono); font-size: 13px; color: var(--black); text-decoration:none; letter-spacing:.01em; }
+    .site-nav { display:flex; gap:1.75rem; list-style:none; align-items:baseline; margin:0; padding:0; }
+    .site-nav a { font-size:13px; color:var(--gray-3); text-decoration:none; }
+    .site-nav a.active { color:var(--black); font-weight:500; }
+    .header-rule { max-width:1160px; margin:0 auto; border:none; border-top:1px solid var(--gray-2); }
+
+    .insights { max-width: 1160px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+    .insights-context { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:.5rem; padding: 2.25rem 0 .5rem; }
+    .insights-context h1 { font-size: 20px; font-weight: 500; margin:0; }
+    .insights-context .sub { font-family: var(--mono); font-size: 12px; color: var(--gray-4); }
+    .insights-hint { font-size:13px; color:var(--gray-3); margin: 0 0 1.75rem; }
+
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--gray-2); border-radius:3px; overflow:hidden; margin-bottom: 3rem; }
+    .stat-tile { background:var(--white); padding:1.25rem 1.5rem; border-left:1px solid var(--gray-2); }
+    .stat-tile:first-child { border-left:none; }
+    .stat-tile .n { font-family:var(--mono); font-size:30px; font-weight:500; letter-spacing:-.02em; line-height:1.1; }
+    .stat-tile .l { font-size:11px; color:var(--gray-3); text-transform:uppercase; letter-spacing:.06em; margin-top:.5rem; }
+    .stat-tile .bar-track { height:3px; background:var(--gray-1); border-radius:2px; overflow:hidden; margin-top:.75rem; }
+    .stat-tile .bar-fill { display:block; height:100%; background:var(--black); }
+    .stat-tile.accent .n { color:var(--ok); } .stat-tile.accent .bar-fill { background:var(--ok); }
+    .stat-tile.warn .n { color:var(--warn); } .stat-tile.warn .bar-fill { background:var(--warn); }
+
+    .insights-grid { display:grid; grid-template-columns:1fr 1fr; gap: 1px 2.5rem; }
+    .insights-panel { padding-bottom: 2.5rem; }
+    .panel-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 1rem; padding-bottom:.6rem; border-bottom:1px solid var(--gray-2); }
+    .panel-head h2 { font-family: var(--mono); font-size: 13.5px; font-weight: 500; margin:0; }
+    .panel-count { font-size: 11px; color: var(--gray-3); }
+
+    .facet-rows { display:flex; flex-direction:column; gap:.0625rem; }
+    .facet-row { display:grid; grid-template-columns: minmax(140px,1.1fr) minmax(60px,3fr) minmax(96px,auto); align-items:center; gap:.75rem; padding:.42rem .5rem; border-radius:2px; }
+    .facet-row-label { font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .facet-row-track { height:5px; background:var(--gray-1); border-radius:2px; overflow:hidden; }
+    .facet-row-fill { display:block; height:100%; background:var(--black); border-radius:2px; }
+    .facet-row-fill.ok { background: var(--ok); }
+    .facet-row-fill.warn { background: var(--warn); }
+    .facet-row-count { font-family:var(--mono); font-size:11px; color:var(--gray-4); text-align:right; white-space:nowrap; }
+
+    /* skeleton */
+    .skel { background: linear-gradient(90deg, var(--gray-1) 25%, var(--gray-2) 37%, var(--gray-1) 63%); background-size:400% 100%; animation:shimmer 1.7s ease-in-out infinite; border-radius:2px; }
+    @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:0 0} }
+    .skel-tile-n { height:30px; width:64px; border-radius:3px; }
+    .skel-tile-l { height:9px; width:76px; border-radius:2px; margin-top:.6rem; }
+    .skel-row { height:16px; border-radius:2px; margin:.42rem .5rem; }
+
+    .site-footer { border-top:1px solid var(--gray-2); max-width:1160px; margin:0 auto; padding:1.25rem 1.5rem 2.5rem; display:flex; align-items:center; justify-content:space-between; }
+    .footer-copy { font-size:12px; color:var(--gray-3); }
+  </style>
+</helmet>
+
+<header class="site-header">
+  <a class="wordmark" href="#">Civic Web Index</a>
+  <ul class="site-nav">
+    <li><a href="#">Explore</a></li>
+    <li><a href="#" class="active">Insights</a></li>
+    <li><a href="#">Reports</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+</header>
+<hr class="header-rule">
+
+<main class="insights">
+
+  <sc-if value="{{loading}}" hint-placeholder-val="{{false}}">
+    <div class="insights-context">
+      <div class="skel" style="height:20px; width:120px;"></div>
+      <div class="skel" style="height:12px; width:160px;"></div>
+    </div>
+    <div class="skel" style="height:13px; width:40%; margin-bottom:1.75rem;"></div>
+
+    <div class="stat-row">
+      <sc-for list="{{skeletonTiles}}" as="t" hint-placeholder-count="4">
+        <div class="stat-tile">
+          <div class="skel skel-tile-n"></div>
+          <div class="skel skel-tile-l"></div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div class="insights-grid">
+      <sc-for list="{{skeletonPanels}}" as="p" hint-placeholder-count="4">
+        <div class="insights-panel">
+          <div class="panel-head"><div class="skel" style="height:13px;width:120px;"></div><div class="skel" style="height:10px;width:50px;"></div></div>
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+          <div class="skel skel-row"></div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{!loading}}" hint-placeholder-val="{{true}}">
+    <div class="insights-context">
+      <h1>Insights</h1>
+      <span class="sub">227,446 domains &middot; updated daily</span>
+    </div>
+    <p class="insights-hint">Aggregate signals across the full collection, recomputed on every crawl.</p>
+
+    <div class="stat-row">
+      <div class="stat-tile accent">
+        <div class="n">83.5%</div>
+        <div class="l">HTTPS available</div>
+        <div class="bar-track"><span class="bar-fill" style="width:83.5%"></span></div>
+      </div>
+      <div class="stat-tile warn">
+        <div class="n">41,704</div>
+        <div class="l">Blocked / challenged</div>
+        <div class="bar-track"><span class="bar-fill" style="width:18%"></span></div>
+      </div>
+      <div class="stat-tile">
+        <div class="n">5,988</div>
+        <div class="l">Probably parked</div>
+        <div class="bar-track"><span class="bar-fill" style="width:3%"></span></div>
+      </div>
+      <div class="stat-tile">
+        <div class="n">157,758</div>
+        <div class="l">Collected OK (69.4%)</div>
+        <div class="bar-track"><span class="bar-fill" style="width:69.4%"></span></div>
+      </div>
+    </div>
+
+    <div class="insights-grid">
+
+      <div class="insights-panel">
+        <div class="panel-head"><h2>Collection status</h2><span class="panel-count">7 values</span></div>
+        <div class="facet-rows">
+          <div class="facet-row"><span class="facet-row-label">ok</span><span class="facet-row-track"><span class="facet-row-fill ok" style="width:100%"></span></span><span class="facet-row-count">157,758 &middot; 69.4%</span></div>
+          <div class="facet-row"><span class="facet-row-label">captcha</span><span class="facet-row-track"><span class="facet-row-fill warn" style="width:15%"></span></span><span class="facet-row-count">22,928 &middot; 10.1%</span></div>
+          <div class="facet-row"><span class="facet-row-label">dns failed</span><span class="facet-row-track"><span class="facet-row-fill" style="width:11%"></span></span><span class="facet-row-count">18,131 &middot; 8.0%</span></div>
+          <div class="facet-row"><span class="facet-row-label">blocked by cdn</span><span class="facet-row-track"><span class="facet-row-fill warn" style="width:6%"></span></span><span class="facet-row-count">9,249 &middot; 4.1%</span></div>
+          <div class="facet-row"><span class="facet-row-label">parked or placeholder</span><span class="facet-row-track"><span class="facet-row-fill" style="width:3%"></span></span><span class="facet-row-count">5,250 &middot; 2.3%</span></div>
+          <div class="facet-row"><span class="facet-row-label">timeout</span><span class="facet-row-track"><span class="facet-row-fill" style="width:3%"></span></span><span class="facet-row-count">4,837 &middot; 2.1%</span></div>
+          <div class="facet-row"><span class="facet-row-label">unknown error</span><span class="facet-row-track"><span class="facet-row-fill" style="width:3%"></span></span><span class="facet-row-count">4,290 &middot; 1.9%</span></div>
+        </div>
+      </div>
+
+      <div class="insights-panel">
+        <div class="panel-head"><h2>Technology stack</h2><span class="panel-count">top 8 of 30</span></div>
+        <div class="facet-rows">
+          <div class="facet-row"><span class="facet-row-label">jQuery</span><span class="facet-row-track"><span class="facet-row-fill" style="width:100%"></span></span><span class="facet-row-count">105,227 &middot; 46.3%</span></div>
+          <div class="facet-row"><span class="facet-row-label">PHP</span><span class="facet-row-track"><span class="facet-row-fill" style="width:79%"></span></span><span class="facet-row-count">83,114 &middot; 36.5%</span></div>
+          <div class="facet-row"><span class="facet-row-label">MySQL</span><span class="facet-row-track"><span class="facet-row-fill" style="width:72%"></span></span><span class="facet-row-count">76,129 &middot; 33.5%</span></div>
+          <div class="facet-row"><span class="facet-row-label">Google Tag Manager</span><span class="facet-row-track"><span class="facet-row-fill" style="width:69%"></span></span><span class="facet-row-count">72,254 &middot; 31.8%</span></div>
+          <div class="facet-row"><span class="facet-row-label">WordPress</span><span class="facet-row-track"><span class="facet-row-fill" style="width:68%"></span></span><span class="facet-row-count">71,915 &middot; 31.6%</span></div>
+          <div class="facet-row"><span class="facet-row-label">jQuery Migrate</span><span class="facet-row-track"><span class="facet-row-fill" style="width:66%"></span></span><span class="facet-row-count">69,079 &middot; 30.4%</span></div>
+          <div class="facet-row"><span class="facet-row-label">HTTP/3</span><span class="facet-row-track"><span class="facet-row-fill" style="width:58%"></span></span><span class="facet-row-count">60,745 &middot; 26.7%</span></div>
+          <div class="facet-row"><span class="facet-row-label">Google Analytics</span><span class="facet-row-track"><span class="facet-row-fill" style="width:54%"></span></span><span class="facet-row-count">57,019 &middot; 25.1%</span></div>
+        </div>
+      </div>
+
+      <div class="insights-panel">
+        <div class="panel-head"><h2>Hosting &amp; nameservers</h2><span class="panel-count">top 8</span></div>
+        <div class="facet-rows">
+          <div class="facet-row"><span class="facet-row-label">Cloudflare, Inc.</span><span class="facet-row-track"><span class="facet-row-fill" style="width:100%"></span></span><span class="facet-row-count">32,909 &middot; 14.5%</span></div>
+          <div class="facet-row"><span class="facet-row-label">Amazon.com, Inc.</span><span class="facet-row-track"><span class="facet-row-fill" style="width:89%"></span></span><span class="facet-row-count">29,428 &middot; 12.9%</span></div>
+          <div class="facet-row"><span class="facet-row-label">Google LLC</span><span class="facet-row-track"><span class="facet-row-fill" style="width:82%"></span></span><span class="facet-row-count">27,093 &middot; 11.9%</span></div>
+          <div class="facet-row"><span class="facet-row-label">Squarespace, Inc.</span><span class="facet-row-track"><span class="facet-row-fill" style="width:66%"></span></span><span class="facet-row-count">21,578 &middot; 9.5%</span></div>
+          <div class="facet-row"><span class="facet-row-label">unknown</span><span class="facet-row-track"><span class="facet-row-fill" style="width:55%"></span></span><span class="facet-row-count">18,244 &middot; 8.0%</span></div>
+          <div class="facet-row"><span class="facet-row-label">Cloudflare London, LLC</span><span class="facet-row-track"><span class="facet-row-fill" style="width:44%"></span></span><span class="facet-row-count">14,322 &middot; 6.3%</span></div>
+          <div class="facet-row"><span class="facet-row-label">GoDaddy.com, LLC</span><span class="facet-row-track"><span class="facet-row-fill" style="width:18%"></span></span><span class="facet-row-count">5,863 &middot; 2.6%</span></div>
+          <div class="facet-row"><span class="facet-row-label">Wix.com Ltd.</span><span class="facet-row-track"><span class="facet-row-fill" style="width:18%"></span></span><span class="facet-row-count">5,779 &middot; 2.5%</span></div>
+        </div>
+      </div>
+
+      <div class="insights-panel">
+        <div class="panel-head"><h2>Top states</h2><span class="panel-count">top 8</span></div>
+        <div class="facet-rows">
+          <div class="facet-row"><span class="facet-row-label">NY</span><span class="facet-row-track"><span class="facet-row-fill" style="width:100%"></span></span><span class="facet-row-count">1,397</span></div>
+          <div class="facet-row"><span class="facet-row-label">DC</span><span class="facet-row-track"><span class="facet-row-fill" style="width:72%"></span></span><span class="facet-row-count">1,009</span></div>
+          <div class="facet-row"><span class="facet-row-label">CA</span><span class="facet-row-track"><span class="facet-row-fill" style="width:61%"></span></span><span class="facet-row-count">850</span></div>
+          <div class="facet-row"><span class="facet-row-label">WI</span><span class="facet-row-track"><span class="facet-row-fill" style="width:59%"></span></span><span class="facet-row-count">819</span></div>
+          <div class="facet-row"><span class="facet-row-label">TX</span><span class="facet-row-track"><span class="facet-row-fill" style="width:52%"></span></span><span class="facet-row-count">728</span></div>
+          <div class="facet-row"><span class="facet-row-label">OH</span><span class="facet-row-track"><span class="facet-row-fill" style="width:45%"></span></span><span class="facet-row-count">634</span></div>
+          <div class="facet-row"><span class="facet-row-label">MI</span><span class="facet-row-track"><span class="facet-row-fill" style="width:44%"></span></span><span class="facet-row-count">620</span></div>
+          <div class="facet-row"><span class="facet-row-label">MN</span><span class="facet-row-track"><span class="facet-row-fill" style="width:42%"></span></span><span class="facet-row-count">580</span></div>
+        </div>
+      </div>
+
+    </div>
+  </sc-if>
+
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">civicwebindex.org</span>
+</footer>
+</x-dc>
+<script data-dc-script data-props='{
+  "loading": {"editor":"boolean","default":false,"section":"Loading state"}
+}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      loading: this.props.loading ?? false,
+      skeletonTiles: [{},{},{},{}],
+      skeletonPanels: [{},{},{},{}]
+    };
+  }
+}
+</script>
+</body>
+</html>

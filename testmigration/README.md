@@ -1,0 +1,221 @@
+# testmigration — static GH Pages prototype
+
+Experiment: can the read side of Civic Web Index run as **pure static files**
+(no FastAPI, no Railway, no live DB connection) using a Parquet snapshot
+queried in-browser with [DuckDB-WASM](https://duckdb.org/docs/api/wasm/overview)?
+
+This folder is self-contained and does not touch the production app
+(`pwo/`). Nothing here is wired into `crawler.py`, `api.py`, or the
+`.github/workflows/crawl.yml` cron — it only reads from MotherDuck to
+produce a snapshot.
+
+## What's here
+
+- `export_data.py` — connects to MotherDuck and exports `v_current`,
+  `v_summary`, `v_dashboard` to `data/*.parquet` (ZSTD-compressed). This
+  is the "just dump today's live state" path, useful for a quick check.
+- `partition_export.py` — connects to MotherDuck and splits `observations`
+  into one small immutable Parquet file per crawl day, under
+  `data/observations/<date>.parquet`. This simulates what a rewritten
+  crawler would write directly (one partition per run) instead of
+  inserting into a database — see "Designing for continuous crawling"
+  below for why this is a separate file per day rather than one growing
+  file.
+- `compact.py` — **the MotherDuck-free path.** Reads only local files
+  (`data/observations/*.parquet`, no DB connection, no token) and
+  recomputes `data/v_current.parquet` with the exact same
+  `QUALIFY ROW_NUMBER() OVER (PARTITION BY domain ORDER BY checked_at DESC) = 1`
+  dedup logic as the `v_current` view in `pwo/db.py`. Verified to produce
+  an identical result (227,446 domains, same stats) to exporting
+  `v_current` straight from MotherDuck.
+- `example-crawl-workflow.yml` — a sketch of the real production workflow
+  (crawl → write partition → commit to a `data` branch → compact →
+  publish to a GitHub Release). **Not wired up** — lives outside
+  `.github/workflows/` on purpose so it can't run; copy it in once the
+  crawler itself is rewritten to emit partitions.
+- `data/` — the exported Parquet files. **Gitignored** — regenerate with
+  the scripts above rather than committing them.
+- `static/style.css` — copied verbatim from `pwo/static/style.css`. Same
+  visual design as production, not a reskin.
+- `static/duckdb-client.js` — the shared DuckDB-WASM bootstrap every page
+  imports: registers `data/v_current.parquet` as a `v_current` view (same
+  name, same shape as the real view in `pwo/db.py`) and exports small
+  helpers (`formatInt`, `timeAgo`, `signalFor`, `rowsToObjects`) mirroring
+  the Jinja filters and `_signal_for`/`_time_ago` helpers in `pwo/api.py`.
+- `index.html`, `explore.html`, `domain.html` — data pages, all reading
+  `v_current.parquet` client-side via DuckDB-WASM instead of a server route:
+  - **index.html** — hero domain count + the cycling "recent observations"
+    feed (`USING SAMPLE 60`, mirrors `get_recent_observations`).
+  - **explore.html** — a sidebar faceted-search layout: all six filter
+    groups (technology, collection status, security, blocking, files,
+    hosting) visible at once with counts, click to toggle, combinable
+    across groups (AND'd together — e.g. technology=jQuery + status=ok
+    narrows correctly). The technology group has a free-text search box
+    that queries the *full* distinct technology set live (not a capped
+    top-N), plus a scrollable list, so every technology is reachable, not
+    just the most common ones. No state filter — dropped as not useful at
+    this stage (the results table still shows state as a column).
+  - **domain.html** — the field-grid single-domain profile plus a status
+    strip (status/HTTPS/blocking/TLS-expiry at a glance), via `?d=<domain>`
+    query param instead of a path segment, since there's no server to route
+    227k+ domain paths to. Full observation history is intentionally not
+    shown — see "What this does and doesn't prove" below.
+
+  Plain multi-page navigation with full reloads between them, same
+  philosophy as the production SSR app ("a page reload for a filter change
+  is an acceptable, simple trade") — no client-side router.
+- `insights.html`, `insights-post.html`, `insights/` — a Markdown-backed
+  blog, replacing an earlier aggregate-stats dashboard version that turned
+  out redundant with Explore's filters. Mirrors `pwo/reports.py`'s exact
+  format (YAML-ish frontmatter block, `title`/`date`/`summary`, then a
+  Markdown body) and parsing logic (`static/insights-client.js`), but reads
+  static `.md` files client-side instead of a server-side glob:
+  - `insights/manifest.json` lists post slugs — a static host can't glob a
+    directory, so add a new post's slug here when adding
+    `insights/posts/<slug>.md`.
+  - `insights.html` is the post list (mirrors `reports.html`);
+    `insights-post.html?slug=<slug>` is a single post (mirrors
+    `report.html`), rendered with [marked](https://github.com/markedjs/marked)
+    from CDN.
+  - `insights/posts/welcome-to-the-blog.md` is a placeholder first post.
+
+## Designing for continuous crawling
+
+The crawl doesn't run once — it runs daily, forever, cycling through the
+seed list on a 90-day rotation (~3,500 domains/day at current volume,
+confirmed against the live data). Any GH-native replacement for
+MotherDuck has to handle that accumulation without either (a) re-writing
+a single ever-growing file into git history every day, which bloats the
+repo since Parquet doesn't diff/delta well as a binary format, or
+(b) losing state between runs.
+
+The split used here:
+
+1. **Raw partitions are immutable and small.** Each day's crawl produces
+   its own `<date>.parquet` (~500KB at current volume) and only that file
+   is ever written — previous days' files are never touched. Committing a
+   new small file each day is ordinary git growth (like committing daily
+   log files), not the "rewrite a 30MB+ blob every day" problem a single
+   monolithic file would cause. These would live on a dedicated `data`
+   branch to keep the daily bot commits out of `main`'s history.
+2. **The compacted snapshot is mutable but never lives in git.** The
+   static site doesn't need history — it needs "latest observation per
+   domain," which stays roughly flat-sized as more days accumulate (it
+   grows only with new *domains*, not new *observations*). Republishing
+   that as a GitHub Release asset (`gh release upload latest
+   v_current.parquet --clobber`) means it can be fully overwritten every
+   day forever with zero git history cost, since release assets aren't
+   part of the repo's git objects.
+3. **The static site's deploy is decoupled from the data's refresh.**
+   `index.html` fetches a stable release URL — GH Pages only needs to
+   redeploy when the app code changes; the daily crawl updates the data
+   independently by re-uploading to the same release tag.
+
+Not addressed yet, worth revisiting after 6-12 months of continuous
+crawling: the partition count itself grows unbounded (~365 tiny files/
+year). At some point a periodic rollup (e.g. monthly) that merges old
+daily partitions into fewer larger files would keep `git clone` fast.
+Not urgent at 67 files today; will matter eventually.
+
+## Run it locally
+
+```bash
+# 1. Get the raw daily partitions (needs MOTHERDUCK_TOKEN in .env, same as
+#    the main app — this step goes away once the crawler writes partitions
+#    directly instead of to MotherDuck)
+uv run python testmigration/partition_export.py
+
+# 2. Compact them into the flat snapshot the site reads — this step is
+#    MotherDuck-free, local files only, and is what production CI would run
+uv run python testmigration/compact.py
+
+# 3. Serve the folder over HTTP (must be a real HTTP server, not file://,
+#    since DuckDB-WASM fetches the Parquet file via range requests)
+cd testmigration
+python3 -m http.server 8080
+
+# 4. Open http://localhost:8080
+```
+
+(`export_data.py` still works too, for a quicker "just dump today's live
+`v_current`" check — but `partition_export.py` + `compact.py` is the path
+that proves out the MotherDuck-free design.)
+
+Note: Python's built-in `http.server` has flaky `Range` header support.
+DuckDB-WASM falls back to a full download when range requests aren't
+honored, so it still works locally — it just won't demonstrate the
+partial-fetch behavior you'd see on GH Pages / any CDN. If you want to
+verify true range-request behavior locally, use `npx http-server -p 8080`
+or `npx serve` instead.
+
+## Deploying to GH Pages (to test the real thing)
+
+Two independent deploys, on different cadences — see `example-crawl-workflow.yml`
+for the sketch:
+
+- **App deploy (rare):** GH Pages serves `index.html` as-is. Redeploys
+  only when the frontend code changes.
+- **Data refresh (daily):** the crawl workflow writes today's partition,
+  commits it to a `data` branch, runs `compact.py`, and publishes
+  `v_current.parquet` to a GitHub Release under a stable tag with
+  `gh release upload latest v_current.parquet --clobber`. `index.html`
+  would point at that release's stable download URL instead of the local
+  `data/v_current.parquet` path it uses today.
+
+Not built yet — this experiment is currently local-only, and the example
+workflow deliberately isn't wired into `.github/workflows/`. It also
+depends on the real crawler being rewritten to emit a partition file
+directly instead of writing to MotherDuck, which hasn't happened — right
+now `partition_export.py`/`compact.py` only prove the *shape* works
+against historical data pulled from MotherDuck.
+
+## What this does and doesn't prove
+
+**In scope for this prototype:**
+- Loading a ~28MB Parquet file (227k domains, 95 columns) in-browser and
+  querying it with real SQL, no server.
+- Home, Explore, and a domain profile page, mirroring the real
+  `home.html`/`explore.html`/`domain.html` templates' markup, CSS, and
+  behavior — facet browsing (6 categories), search/entity-type/state
+  filters combined with a facet, pagination, the domain inspector side
+  panel, and the recent-observations feed — all reimplemented as
+  client-side SQL instead of Jinja + `/api/*`.
+- Verified against real interaction, not just "it loads": combined
+  facet + state + search filtering narrows results correctly
+  (227,446 → 105,227 with a technology facet → 24 adding a state → 7
+  adding a search term → back to 227,446 on clear), and a request-token
+  guard was added to `loadRows()` after testing surfaced a real race
+  condition where an in-flight unfiltered query could resolve after a
+  filtered one and silently clobber it.
+
+**Deliberately out of scope for now** (see the CLAUDE.md discussion this
+came out of):
+- Full observation history (`observations` table, growing ~4x/year as the
+  90-day rotation repeats) — only the latest snapshot (`v_current`) is
+  shipped. `domain.html` shows the latest observation only, with a note
+  in the UI saying so. Per-domain history would need its own decision:
+  ship it too, page it, or drop it from the static version for good.
+- Per-domain static pages / SEO — `domain.html?d=<domain>` is a client
+  rendered query-param page, not a real path; a crawler hitting
+  `/domains/some-agency.gov` directly gets nothing without JS execution.
+  If that matters, static pre-rendering per domain (227k+ pages now) is a
+  separate build step to design.
+- Reports (`reports/posts/*.md`) — not touched here; those are already
+  static-friendly and would likely prerender to HTML separately.
+- `/api/*` JSON endpoints for external consumers — no equivalent yet;
+  could just be "fetch the Parquet file yourself" going forward, or a
+  documented DuckDB-WASM snippet.
+
+## Known rough edges to watch for while testing
+
+- First load pays for the full DuckDB-WASM runtime (~a few MB of wasm/js)
+  plus the Parquet fetch. Worth checking real-world load time on a cold
+  cache, not just localhost.
+- The 28MB file only has ~1 observation per domain right now since the
+  90-day rotation hasn't completed a full cycle — `v_current` will grow
+  over time as more fields fill in per crawl, but the *row count* (one
+  per domain) stays flat. It's `observations` (full history) that grows
+  unbounded.
+- No error handling yet for "DuckDB-WASM unsupported in this browser" —
+  worth checking on older/mobile browsers before treating this as
+  production-ready.

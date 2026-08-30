@@ -1,0 +1,205 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black:#111; --white:#fff; --gray-1:#f4f4f4; --gray-2:#e0e0e0; --gray-3:#767676; --gray-4:#555;
+      --fail:#c0392b; --warn:#b9770e; --ok:#2a9d2a; --mono:'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--white); color:var(--black); font-family:'Inter', sans-serif; font-size:14px; font-weight:400; line-height:1.5; -webkit-font-smoothing:antialiased; }
+    a { color: var(--black); }
+    a:hover { color: var(--gray-4); }
+
+    .page { max-width: 1440px; margin: 0 auto; }
+    .site-header { max-width: 900px; margin: 0 auto; padding: 1.75rem 1.5rem; display:flex; align-items:baseline; justify-content:space-between; }
+    .wordmark { font-family: var(--mono); font-size: 13px; color: var(--black); text-decoration:none; letter-spacing:.01em; }
+    .site-nav { display:flex; gap:1.75rem; list-style:none; align-items:baseline; margin:0; padding:0; }
+    .site-nav a { font-size:13px; color:var(--gray-3); text-decoration:none; letter-spacing:.01em; }
+    .site-nav a.active { color:var(--black); font-weight:500; }
+    .header-rule { max-width:900px; margin:0 auto; border:none; border-top:1px solid var(--gray-2); }
+
+    .landing { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+
+    .live-badge { display:flex; align-items:center; gap:.5rem; font-family:var(--mono); font-size:11px; color:var(--gray-3); letter-spacing:.06em; text-transform:uppercase; margin-top: 2.75rem; }
+    .live-dot { width:5px; height:5px; border-radius:50%; background:var(--ok); animation:pulse 2s ease-in-out infinite; flex-shrink:0; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .landing-hero { padding: 1.25rem 0 2.75rem; max-width: 640px; }
+    .landing-hero h1 { font-size: 34px; font-weight: 300; line-height: 1.28; letter-spacing: -.02em; color: var(--black); margin: 0 0 1.1rem; }
+    .landing-hero h1 strong { font-weight: 500; }
+    .landing-meta { font-size: 15px; color: var(--gray-3); line-height: 1.65; margin-bottom: 2.25rem; max-width: 52ch; }
+    .landing-meta strong { color: var(--black); font-weight: 500; font-family: var(--mono); }
+    .hero-actions { display:flex; gap:1.5rem; align-items:center; }
+    .btn-primary { font-size:13px; font-weight:500; color:var(--white); background:var(--black); border:none; padding:9px 20px; border-radius:2px; text-decoration:none; display:inline-block; }
+    .btn-ghost { font-size:13px; color:var(--gray-3); text-decoration:none; }
+
+    .stat-strip { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--gray-2); border-radius:3px; overflow:hidden; margin-bottom: 2.75rem; }
+    .stat-tile { background:var(--white); padding:1.1rem 1.35rem; border-left:1px solid var(--gray-2); }
+    .stat-tile:first-child { border-left:none; }
+    .stat-tile .n { font-family:var(--mono); font-size:24px; font-weight:500; letter-spacing:-.02em; line-height:1.1; }
+    .stat-tile .l { font-size:10.5px; color:var(--gray-3); text-transform:uppercase; letter-spacing:.06em; margin-top:.45rem; }
+    .stat-tile .bar-track { height:3px; background:var(--gray-1); border-radius:2px; overflow:hidden; margin-top:.65rem; }
+    .stat-tile .bar-fill { display:block; height:100%; background:var(--black); }
+    .stat-tile.accent .n { color:var(--ok); }
+    .stat-tile.accent .bar-fill { background:var(--ok); }
+    .stat-tile.warn .n { color: var(--warn); }
+    .stat-tile.warn .bar-fill { background: var(--warn); }
+
+    .feed-section { border-top:1px solid var(--gray-2); padding: 2.25rem 0 3rem; }
+    .feed-eyebrow { font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--gray-3); margin-bottom:1.1rem; display:flex; align-items:center; gap:.5rem; }
+    .feed-list { list-style:none; margin:0; padding:0; }
+    .feed-item { border-bottom:1px solid var(--gray-1); font-size:12.5px; }
+    .feed-item:last-child { border-bottom:none; }
+    .feed-item a { display:grid; grid-template-columns:210px 1fr auto; gap:.9rem; padding:.55rem 0; align-items:baseline; text-decoration:none; }
+    .feed-item.entering { animation:fadeUp .3s ease both; }
+    @keyframes fadeUp { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+    .feed-domain { font-family:var(--mono); color:var(--black); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .feed-signal { color:var(--gray-4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .feed-signal.warn { color:var(--warn); }
+    .feed-signal.ok { color:var(--ok); }
+    .feed-signal.fail { color:var(--fail); }
+    .feed-age { font-family:var(--mono); font-size:11px; color:var(--gray-3); white-space:nowrap; }
+
+    /* skeleton / loading state */
+    .skel { background: linear-gradient(90deg, var(--gray-1) 25%, var(--gray-2) 37%, var(--gray-1) 63%); background-size:400% 100%; animation:shimmer 1.7s ease-in-out infinite; border-radius:2px; }
+    @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:0 0} }
+    .skel-line { height:11px; }
+    .skel-badge { height:11px; width:180px; }
+    .skel-h1 { height:34px; width:88%; margin-bottom:10px; border-radius:3px; }
+    .skel-h1-2 { height:34px; width:62%; border-radius:3px; }
+    .skel-meta { height:14px; width:70%; margin-bottom:2.25rem; border-radius:3px; }
+    .skel-tile-n { height:24px; width:56px; border-radius:3px; }
+    .skel-tile-l { height:9px; width:70px; border-radius:2px; margin-top:.5rem; }
+    .skel-feed-row { height:13px; border-radius:2px; margin:.55rem 0; }
+
+    .site-footer { border-top:1px solid var(--gray-2); max-width:900px; margin:0 auto; padding:1.25rem 1.5rem 2.5rem; display:flex; align-items:center; justify-content:space-between; }
+    .footer-copy { font-size:12px; color:var(--gray-3); }
+    .footer-links { display:flex; gap:1.25rem; list-style:none; margin:0; padding:0; }
+    .footer-links a { font-size:12px; color:var(--gray-3); text-decoration:none; }
+  </style>
+</helmet>
+
+<div class="page">
+  <header class="site-header">
+    <a class="wordmark" href="#">Civic Web Index</a>
+    <ul class="site-nav">
+      <li><a href="#">Explore</a></li>
+      <li><a href="#">Insights</a></li>
+      <li><a href="#">Reports</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+  </header>
+  <hr class="header-rule">
+
+  <main class="landing">
+
+    <sc-if value="{{loading}}" hint-placeholder-val="{{false}}">
+      <div class="live-badge skel skel-badge" style="height:11px;"></div>
+      <div class="landing-hero">
+        <div class="skel skel-h1"></div>
+        <div class="skel skel-h1-2"></div>
+        <div class="skel skel-meta" style="margin-top:1.1rem;"></div>
+        <div class="hero-actions">
+          <div class="skel" style="width:140px; height:36px; border-radius:2px;"></div>
+          <div class="skel" style="width:110px; height:14px; border-radius:2px;"></div>
+        </div>
+      </div>
+      <div class="stat-strip">
+        <sc-for list="{{skeletonTiles}}" as="t" hint-placeholder-count="4">
+          <div class="stat-tile">
+            <div class="skel skel-tile-n"></div>
+            <div class="skel skel-tile-l"></div>
+          </div>
+        </sc-for>
+      </div>
+      <div class="feed-section">
+        <div class="feed-eyebrow"><span class="live-dot"></span> Recent observations</div>
+        <sc-for list="{{skeletonFeed}}" as="f" hint-placeholder-count="6">
+          <div class="skel skel-feed-row"></div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{!loading}}" hint-placeholder-val="{{true}}">
+      <div class="live-badge"><span class="live-dot"></span> 227,446 domains monitored &middot; updated daily</div>
+
+      <div class="landing-hero">
+        <h1>Mapping the <strong>digital infrastructure</strong> of the American civic web</h1>
+        <p class="landing-meta">
+          Tracking availability, security posture, hosting, and accessibility across
+          <strong>227,446</strong> government and nonprofit domains &mdash; recrawled on a rolling
+          90-day cycle, no gaps in the record.
+        </p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="#">Explore domains</a>
+          <a class="btn-ghost" href="#">View insights &rarr;</a>
+        </div>
+      </div>
+
+      <div class="stat-strip">
+        <div class="stat-tile accent">
+          <div class="n">83.5%</div>
+          <div class="l">HTTPS available</div>
+          <div class="bar-track"><span class="bar-fill" style="width:83.5%"></span></div>
+        </div>
+        <div class="stat-tile warn">
+          <div class="n">41,704</div>
+          <div class="l">Blocked / challenged</div>
+          <div class="bar-track"><span class="bar-fill" style="width:18%"></span></div>
+        </div>
+        <div class="stat-tile">
+          <div class="n">5,988</div>
+          <div class="l">Probably parked</div>
+          <div class="bar-track"><span class="bar-fill" style="width:3%"></span></div>
+        </div>
+        <div class="stat-tile">
+          <div class="n">227,446</div>
+          <div class="l">Domains tracked</div>
+          <div class="bar-track"><span class="bar-fill" style="width:100%"></span></div>
+        </div>
+      </div>
+
+      <div class="feed-section">
+        <div class="feed-eyebrow"><span class="live-dot"></span> Recent observations</div>
+        <ul class="feed-list">
+          <li class="feed-item entering"><a href="#"><span class="feed-domain">13thjudicialil.gov</span><span class="feed-signal">Cloudflare &middot; jQuery</span><span class="feed-age">3s ago</span></a></li>
+          <li class="feed-item entering"><a href="#"><span class="feed-domain">riversidewatershed.org</span><span class="feed-signal ok">HTTPS &middot; valid TLS</span><span class="feed-age">6s ago</span></a></li>
+          <li class="feed-item entering"><a href="#"><span class="feed-domain">cityofmapleton.gov</span><span class="feed-signal warn">blocked &middot; captcha</span><span class="feed-age">9s ago</span></a></li>
+          <li class="feed-item entering"><a href="#"><span class="feed-domain">willowcreeklibrary.org</span><span class="feed-signal">serves llms.txt</span><span class="feed-age">14s ago</span></a></li>
+          <li class="feed-item entering"><a href="#"><span class="feed-domain">co.jefferson.wa.us</span><span class="feed-signal warn">TLS expires in 18d</span><span class="feed-age">19s ago</span></a></li>
+          <li class="feed-item entering"><a href="#"><span class="feed-domain">midwestfoodbank.org</span><span class="feed-signal fail">DNS not resolving</span><span class="feed-age">24s ago</span></a></li>
+        </ul>
+      </div>
+    </sc-if>
+
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-copy">civicwebindex.org</span>
+    <ul class="footer-links"><li><a href="#">llms.txt</a></li></ul>
+  </footer>
+</div>
+</x-dc>
+<script data-dc-script data-props='{
+  "loading": {"editor":"boolean","default":false,"section":"Loading state"}
+}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      loading: this.props.loading ?? false,
+      skeletonTiles: [{},{},{},{}],
+      skeletonFeed: [{},{},{},{},{},{}]
+    };
+  }
+}
+</script>
+</body>
+</html>

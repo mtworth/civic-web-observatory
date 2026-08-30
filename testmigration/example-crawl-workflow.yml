@@ -1,0 +1,89 @@
+# NOT an active workflow — lives in testmigration/, not .github/workflows/,
+# so GitHub Actions never picks it up. This is a sketch of what would
+# replace .github/workflows/crawl.yml if the MotherDuck migration goes
+# ahead. Copy into .github/workflows/ and adjust once the real crawler is
+# rewritten to emit a partition file instead of DB rows.
+#
+# Design: the daily slice logic (SHA-256(domain) % 90 == today % 90) is a
+# pure function of the date — it needs no prior state, so nothing here
+# depends on reading yesterday's data before deciding what to crawl today.
+# What *does* need continuity across runs is the accumulated observation
+# history, handled by two separate artifacts with very different lifetimes:
+#
+#   1. Raw partitions — one small immutable Parquet file per crawl day,
+#      committed to a dedicated `data` branch. ~500KB/day at current
+#      volume. Committing new small immutable files is normal git growth,
+#      not the "rewrite a big blob every day" bloat problem a single
+#      monolithic committed file would cause.
+#
+#   2. Compacted snapshot — v_current.parquet, latest-per-domain,
+#      recomputed from all partitions on every run and re-uploaded to a
+#      GitHub Release under a stable "latest" tag with `--clobber`.
+#      Release assets aren't part of git history, so this file can be
+#      fully replaced every day forever without the repo growing from it.
+#      The static site always fetches the same stable release URL, so
+#      GH Pages itself only needs to redeploy when the *app* changes, not
+#      when the *data* changes.
+
+name: crawl (example)
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: crawl
+  cancel-in-progress: false  # never overlap two crawl runs against the same data branch
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync
+
+      # Pure function of today's date — no need to read prior state first.
+      - name: Crawl today's slice
+        run: |
+          uv run pwo dotgov \
+            --slice-today \
+            --out data/observations/$(date +%F).parquet
+          # ^ illustrative flag; the real crawler currently writes to
+          # db.py/DuckDB, not a Parquet file directly — this is the piece
+          # that needs rewriting, not something that exists today.
+
+      - name: Commit today's partition to the data branch
+        run: |
+          git fetch origin data
+          git worktree add /tmp/data-branch origin/data
+          cp data/observations/$(date +%F).parquet /tmp/data-branch/observations/
+          cd /tmp/data-branch
+          git add observations/$(date +%F).parquet
+          git -c user.name="crawl-bot" -c user.email="crawl-bot@users.noreply.github.com" \
+            commit -m "observations: $(date +%F)"
+          git push origin HEAD:data
+
+      - name: Compact all partitions into v_current
+        run: |
+          git fetch origin data
+          git worktree add /tmp/data-branch origin/data  # includes today's new partition
+          uv run python testmigration/compact.py \
+            --partitions /tmp/data-branch/observations \
+            --out v_current.parquet
+
+      - name: Publish snapshot as a GitHub Release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload latest v_current.parquet --clobber
+
+  # A separate, much less frequent job (weekly/monthly, not shown) would
+  # roll up old daily partitions into fewer larger monthly files once the
+  # partition count grows into the hundreds — not urgent yet, but worth
+  # revisiting after ~6-12 months of continuous crawling so `git clone`
+  # doesn't have to pull thousands of tiny files.
