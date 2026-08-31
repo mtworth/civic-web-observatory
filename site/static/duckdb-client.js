@@ -73,9 +73,8 @@ export function signalFor(d) {
   if (blockType && blockType !== "none") {
     return [`blocked · ${blockType.replaceAll("_", " ")}`, "warn"];
   }
-  const expiry = d.tls_days_until_expiry;
-  if (expiry !== null && expiry !== undefined && Number(expiry) < 30) {
-    return [`TLS expires in ${expiry}d`, "warn"];
+  if (d.tls_expiry_bucket === "<30d") {
+    return ["TLS expiring soon", "warn"];
   }
   if (d.llms_txt_available) return ["serves llms.txt", "ok"];
   const technologies = d.technologies || [];

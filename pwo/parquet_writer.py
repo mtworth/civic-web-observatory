@@ -1,15 +1,28 @@
 """
 Writes a batch of crawl results directly to a Parquet file — the
 MotherDuck-free output path for the static-site pipeline (see
-testmigration/README.md). Same one-row-per-observation shape as the
-`observations` table in db.py's insert_observation(), just serialized
-straight to a file instead of inserted into a database. No DB connection,
-no MOTHERDUCK_TOKEN, nothing but DuckDB used as a local Parquet writer.
+site/README.md's "Ingestion" section). Same one-row-per-observation shape
+as the `observations` table in db.py's insert_observation(), just
+serialized straight to a file instead of inserted into a database. No DB
+connection, no MOTHERDUCK_TOKEN, nothing but DuckDB used as a local
+Parquet writer.
 
 Intended usage: one file per crawl run (a day's slice), e.g.
 data/observations/<date>.parquet — an immutable partition compact.py
 later reads alongside every other day's partition to rebuild the latest-
-per-domain snapshot.
+per-domain snapshot. Applies a public-field allowlist here, at the point
+of writing, not later in compact.py — this is what's committed to the
+public `data` branch, so anything not filtered out here is exposed via
+git history regardless of what a later compaction step selects.
+
+Fields excluded from every partition this writes (raw infrastructure
+identifiers and free-text error strings — see site/README.md's
+"Responsible publication" section for the reasoning): primary_ip,
+a_records, aaaa_records, cname_records, ns_records, host_asn,
+host_network_name, ein, run_id, crawler_version, stage, and every
+`*_error` field. tls_not_before/tls_not_after are dropped in favor of a
+coarse tls_expiry_bucket derived column; the exact
+tls_days_until_expiry count is dropped too.
 """
 
 import json
@@ -21,6 +34,34 @@ from pathlib import Path
 import duckdb
 
 from .models import DomainObservation
+
+# Everything in this set is dropped from every partition written — never
+# committed to the (public) `data` branch in the first place, so there's
+# no later compaction/publish step that could accidentally re-expose it.
+_PUBLIC_EXCLUDE = frozenset({
+    "primary_ip",
+    "a_records",
+    "aaaa_records",
+    "cname_records",
+    "ns_records",
+    "host_asn",
+    "host_network_name",
+    "ein",
+    "run_id",
+    "crawler_version",
+    "stage",
+    "dns_error",
+    "tls_error",
+    "tls_not_before",
+    "tls_not_after",
+    "tls_days_until_expiry",
+    "homepage_error",
+    "robots_txt_error",
+    "sitemap_xml_error",
+    "llms_txt_error",
+    "static_a11y_error",
+    "error_message",
+})
 
 
 def _json_default(obj):
@@ -55,8 +96,21 @@ def _duckdb_type_for(annotation) -> str:
 def _select_columns_sql() -> str:
     parts = []
     for name, field in DomainObservation.model_fields.items():
+        if name in _PUBLIC_EXCLUDE:
+            continue
         duckdb_type = _duckdb_type_for(field.annotation)
         parts.append(f'"{name}"::{duckdb_type} AS "{name}"')
+
+    # A cert's exact expiry is public anyway (visible on the live TLS
+    # handshake), but a bucket is enough for the "is this about to lapse"
+    # research question without shipping a bulk near-expiry hit list.
+    parts.append(
+        "CASE "
+        "WHEN \"tls_days_until_expiry\" IS NULL THEN NULL "
+        "WHEN \"tls_days_until_expiry\"::INTEGER < 30 THEN '<30d' "
+        "WHEN \"tls_days_until_expiry\"::INTEGER < 90 THEN '30-90d' "
+        "ELSE '>90d' END AS \"tls_expiry_bucket\""
+    )
     return ", ".join(parts)
 
 

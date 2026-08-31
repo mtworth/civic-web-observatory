@@ -136,7 +136,7 @@ function facetClause(category, value) {
     if (value === "https") return `https_available = true`;
     if (value === "redirect") return `http_redirects_to_https = true`;
     if (value === "tls") return `tls_valid = true`;
-    if (value === "expiring") return `tls_days_until_expiry IS NOT NULL AND tls_days_until_expiry < 30`;
+    if (value === "expiring") return `tls_expiry_bucket = '<30d'`;
     return null;
   }
   if (category === "blocking") {
@@ -208,7 +208,7 @@ async function facetRowsFor(category) {
         sum(CASE WHEN https_available THEN 1 ELSE 0 END)::DOUBLE AS https_n,
         sum(CASE WHEN http_redirects_to_https THEN 1 ELSE 0 END)::DOUBLE AS redirect_n,
         sum(CASE WHEN tls_valid THEN 1 ELSE 0 END)::DOUBLE AS tls_n,
-        sum(CASE WHEN tls_days_until_expiry IS NOT NULL AND tls_days_until_expiry < 30 THEN 1 ELSE 0 END)::DOUBLE AS expiring_n
+        sum(CASE WHEN tls_expiry_bucket = '<30d' THEN 1 ELSE 0 END)::DOUBLE AS expiring_n
       FROM v_current
     `);
     const row = rowsToObjects(r)[0];
@@ -384,7 +384,7 @@ async function loadRows() {
 
   const result = await conn.query(`
     SELECT domain, org_name, org_type, state, collection_status, homepage_block_type,
-           https_available, tls_valid, tls_days_until_expiry,
+           https_available, tls_valid,
            robots_txt_available, sitemap_xml_available, llms_txt_available,
            nameserver_provider_hint, checked_at
     FROM v_current

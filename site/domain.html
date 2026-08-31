@@ -114,12 +114,12 @@ async function main() {
 
   const strip = document.getElementById("status-strip");
   const blockOk = !d.homepage_block_type || d.homepage_block_type === "none";
-  const expiryOk = d.tls_days_until_expiry === null || d.tls_days_until_expiry === undefined || d.tls_days_until_expiry >= 30;
+  const expiryOk = d.tls_expiry_bucket !== "<30d";
   strip.innerHTML = `
     <span class="item"><span class="dot ${statusDot(d.collection_status === "ok")}"></span> Status: <strong>${d.collection_status || "unknown"}</strong></span>
     <span class="item"><span class="dot ${statusDot(!!d.tls_valid)}"></span> HTTPS: <strong>${d.tls_valid ? "valid TLS" : d.https_available ? "TLS issue" : "unavailable"}</strong></span>
     <span class="item"><span class="dot ${statusDot(blockOk)}"></span> Blocking: <strong>${blockOk ? "none" : d.homepage_block_type}</strong></span>
-    ${d.tls_days_until_expiry != null ? `<span class="item"><span class="dot ${statusDot(expiryOk)}"></span> TLS expires in <strong>${d.tls_days_until_expiry}d</strong></span>` : ""}
+    ${d.tls_expiry_bucket ? `<span class="item"><span class="dot ${statusDot(expiryOk)}"></span> TLS expiry: <strong>${d.tls_expiry_bucket}</strong></span>` : ""}
   `;
 
   const grid = document.getElementById("field-grid");
@@ -132,10 +132,8 @@ async function main() {
       ${row("Source", d.source)}
     </div>
     <div>
-      <div class="field-group-title">DNS &amp; hosting</div>
-      ${row("Primary IP", d.primary_ip)}
-      ${row("ASN", d.host_asn)}
-      ${row("ASN org", d.host_asn_org)}
+      <div class="field-group-title">Hosting</div>
+      ${row("Hosting provider", d.host_asn_org)}
       ${row("Nameserver hint", d.nameserver_provider_hint)}
       ${row("CNAME hint", d.cname_provider_hint)}
     </div>
@@ -145,7 +143,7 @@ async function main() {
       ${row("Redirects to HTTPS", d.http_redirects_to_https, true)}
       ${row("TLS valid", d.tls_valid, true)}
       ${row("TLS issuer", d.tls_issuer)}
-      ${row("TLS days until expiry", d.tls_days_until_expiry)}
+      ${row("TLS expiry", d.tls_expiry_bucket)}
     </div>
     <div>
       <div class="field-group-title">Machine-readable files</div>

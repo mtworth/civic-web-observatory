@@ -63,11 +63,7 @@ def main() -> None:
     con.execute(
         f"""
         COPY (
-            SELECT * EXCLUDE (
-                axe_ran, axe_error, axe_violations_total, axe_violations_critical,
-                axe_violations_serious, axe_violations_moderate, axe_violations_minor,
-                axe_rule_ids, axe_wcag_tags
-            )
+            SELECT *
             FROM read_parquet('{partitions_glob}', union_by_name=true)
             QUALIFY ROW_NUMBER() OVER (PARTITION BY domain ORDER BY checked_at DESC) = 1
         ) TO '{out_path}' (FORMAT PARQUET, COMPRESSION ZSTD)

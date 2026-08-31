@@ -146,7 +146,7 @@
     const recentResult = await conn.query(`
       SELECT domain, org_name, org_type, checked_at, collection_status,
              homepage_block_type, https_available, tls_valid,
-             tls_days_until_expiry, llms_txt_available, dns_resolves,
+             tls_expiry_bucket, llms_txt_available, dns_resolves,
              technologies, is_probably_parked
       FROM v_current
       WHERE checked_at >= TIMESTAMP '${cutoff.replace("T", " ").replace("Z", "")}'
