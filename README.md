@@ -91,8 +91,8 @@ reports/
 **Requirements:** Python 3.11+, [uv](https://github.com/astral-sh/uv)
 
 ```bash
-git clone https://github.com/mtworth/publicwebobservatory
-cd publicwebobservatory
+git clone https://github.com/mtworth/civic-web-observatory
+cd civic-web-observatory
 uv sync
 cp .env.example .env
 # Fill in MOTHERDUCK_TOKEN (or leave blank to use a local DuckDB file)

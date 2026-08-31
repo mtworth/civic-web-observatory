@@ -159,7 +159,7 @@ or `npx serve` instead.
 
 ## Deploying to GH Pages
 
-**Live at https://mtworth.github.io/publicwebobservatory/** (repo made
+**Live at https://mtworth.github.io/civic-web-observatory/** (repo made
 public to get there — GitHub Pages and Release assets both require public
 access to work for anonymous visitors; see the note on CORS below for the
 other thing that wasn't obvious until deployed for real).
