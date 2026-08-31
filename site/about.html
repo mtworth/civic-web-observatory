@@ -26,31 +26,40 @@
 <div class="methods-body">
   <h2>About</h2>
   <p>
-    Civic Web Observatory performs lightweight, transparent, homepage-only
-    checks of public-interest websites &mdash; U.S. federal, state, and local
-    government agencies, plus registered nonprofits. It records
-    availability, machine-readability, hosting/DNS hints, and basic
-    accessibility signals. It does not bypass bot protections, crawl
-    private areas, or perform vulnerability scanning.
+    The web that powers civic society, government agencies, public
+    records, nonprofit services, deserves to be studied on its own terms.
+    It's easy to lose track of as the wider web goes through a large
+    technology transformation: AI-driven traffic, shifting search
+    behavior, hosting platforms consolidating. Civic Web Observatory
+    tracks this layer of the web directly, not through sentiment or
+    opinion, but through what these sites actually serve.
+  </p>
+  <p>
+    It performs lightweight, transparent, homepage-only checks of
+    public-interest websites: U.S. federal, state, and local government
+    agencies, plus registered nonprofits. It records availability,
+    machine-readability, hosting/DNS hints, and basic accessibility
+    signals. It does not bypass bot protections, crawl private areas, or
+    perform vulnerability scanning.
   </p>
 
   <h3>Sources</h3>
   <p>The domain list is built from two public datasets:</p>
   <ul>
-    <li><strong>.gov domains</strong> &mdash; the live CISA .gov domain
+    <li><strong>.gov domains</strong>, from the live CISA .gov domain
       registry, covering federal, state, and local government entities.</li>
-    <li><strong>Nonprofit domains</strong> &mdash; extracted from IRS Form
-      990 e-file filings, which include an organization's reported website
+    <li><strong>Nonprofit domains</strong>, extracted from IRS Form 990
+      e-file filings, which include an organization's reported website
       alongside its EIN, name, and filing details.</li>
   </ul>
   <p>Both are merged into one seed list of roughly 318,000 domains.</p>
 
   <h3>Methods</h3>
   <p>
-    Each domain gets one homepage-only visit per crawl &mdash; no
-    following links, no crawling beyond the homepage. A single crawl
-    covers a deterministic 1/90th slice of the seed list, so every domain
-    is revisited on a rolling 90-day cycle.
+    Each domain gets one homepage-only visit per crawl: no following
+    links, no crawling beyond the homepage. A single crawl covers a
+    deterministic 1/90th slice of the seed list, so every domain is
+    revisited on a rolling 90-day cycle.
   </p>
   <p>What's checked, per domain:</p>
   <ul>
@@ -65,8 +74,8 @@
   </ul>
   <p>
     Raw observations are kept as-is, not converted into a single derived
-    score &mdash; a status code and a certificate expiry date are recorded
-    as themselves, not folded into a composite number.
+    score. A status code and a certificate expiry date are recorded as
+    themselves, not folded into a composite number.
   </p>
 
   <h3>What this doesn't do</h3>
