@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title">Insights — Civic Web Index</title>
+<title id="page-title">Insights — Civic Web Observatory</title>
 <meta name="description" id="page-description" content="">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/style.css">
@@ -12,12 +12,12 @@
 <body>
 
 <header class="site-header">
-  <a class="wordmark" href="index.html">Civic Web Index</a>
+  <a class="wordmark" href="index.html">Civic Web Observatory</a>
   <nav aria-label="Primary">
     <ul class="site-nav">
       <li><a href="explore.html">Explore</a></li>
       <li><a href="insights.html" class="active" aria-current="page">Insights</a></li>
-      <li><a href="#" aria-disabled="true" title="Coming soon">About</a></li>
+      <li><a href="about.html">About</a></li>
     </ul>
   </nav>
 </header>
@@ -45,7 +45,7 @@
 </main>
 
 <footer class="site-footer">
-  <span class="footer-copy">civicwebindex.org</span>
+  <span class="footer-copy">Civic Web Observatory</span>
 </footer>
 
 <script type="module">
@@ -69,7 +69,7 @@ async function main() {
     return;
   }
 
-  document.getElementById("page-title").textContent = `${post.title} — Civic Web Index`;
+  document.getElementById("page-title").textContent = `${post.title} — Civic Web Observatory`;
   document.getElementById("page-description").setAttribute("content", post.summary);
   document.getElementById("post-date").textContent = post.date;
   document.getElementById("post-title").textContent = post.title;

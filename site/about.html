@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Civic Web Observatory</title>
+<meta name="description" content="What Civic Web Observatory checks, where its domain list comes from, and what it deliberately doesn't do.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <a class="wordmark" href="index.html">Civic Web Observatory</a>
+  <nav aria-label="Primary">
+    <ul class="site-nav">
+      <li><a href="explore.html">Explore</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="about.html" class="active" aria-current="page">About</a></li>
+    </ul>
+  </nav>
+</header>
+<hr class="header-rule">
+
+<main>
+<div class="methods-body">
+  <h2>About</h2>
+  <p>
+    Civic Web Observatory performs lightweight, transparent, homepage-only
+    checks of public-interest websites &mdash; U.S. federal, state, and local
+    government agencies, plus registered nonprofits. It records
+    availability, machine-readability, hosting/DNS hints, and basic
+    accessibility signals. It does not bypass bot protections, crawl
+    private areas, or perform vulnerability scanning.
+  </p>
+
+  <h3>Sources</h3>
+  <p>The domain list is built from two public datasets:</p>
+  <ul>
+    <li><strong>.gov domains</strong> &mdash; the live CISA .gov domain
+      registry, covering federal, state, and local government entities.</li>
+    <li><strong>Nonprofit domains</strong> &mdash; extracted from IRS Form
+      990 e-file filings, which include an organization's reported website
+      alongside its EIN, name, and filing details.</li>
+  </ul>
+  <p>Both are merged into one seed list of roughly 318,000 domains.</p>
+
+  <h3>Methods</h3>
+  <p>
+    Each domain gets one homepage-only visit per crawl &mdash; no
+    following links, no crawling beyond the homepage. A single crawl
+    covers a deterministic 1/90th slice of the seed list, so every domain
+    is revisited on a rolling 90-day cycle.
+  </p>
+  <p>What's checked, per domain:</p>
+  <ul>
+    <li>DNS resolution and hosting/ASN hints</li>
+    <li>HTTP and HTTPS availability, redirect behavior, TLS certificate
+      validity</li>
+    <li>robots.txt, sitemap.xml, and llms.txt presence</li>
+    <li>Basic HTML signals (title, meta description, language, mobile
+      viewport) and static accessibility checks</li>
+    <li>Detected technologies (CMS, analytics, frameworks) from page
+      markup and headers</li>
+  </ul>
+  <p>
+    Raw observations are kept as-is, not converted into a single derived
+    score &mdash; a status code and a certificate expiry date are recorded
+    as themselves, not folded into a composite number.
+  </p>
+
+  <h3>What this doesn't do</h3>
+  <p>
+    No bypassing bot protection, no proxy rotation, no CAPTCHA solving, no
+    fingerprint spoofing. A domain that blocks the crawler is recorded as
+    blocked, not worked around. If a site returns a WAF/CDN challenge
+    page, that's the observation.
+  </p>
+</div>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-copy">Civic Web Observatory</span>
+</footer>
+
+</body>
+</html>

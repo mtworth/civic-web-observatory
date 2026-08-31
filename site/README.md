@@ -1,6 +1,6 @@
-# site — the static Civic Web Index
+# site — the static Civic Web Observatory
 
-The read side of Civic Web Index as **pure static files** — no FastAPI, no
+The read side of Civic Web Observatory as **pure static files** — no FastAPI, no
 Railway, no live DB connection — a Parquet snapshot queried in-browser with
 [DuckDB-WASM](https://duckdb.org/docs/api/wasm/overview). This is what
 `.github/workflows/deploy-pages.yml` publishes to GitHub Pages.

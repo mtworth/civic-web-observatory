@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title">Domain — Civic Web Index</title>
+<title id="page-title">Domain — Civic Web Observatory</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/style.css">
 <style>
@@ -14,12 +14,12 @@
 <body>
 
 <header class="site-header">
-  <a class="wordmark" href="index.html">Civic Web Index</a>
+  <a class="wordmark" href="index.html">Civic Web Observatory</a>
   <nav aria-label="Primary">
     <ul class="site-nav">
       <li><a href="explore.html">Explore</a></li>
       <li><a href="insights.html">Insights</a></li>
-      <li><a href="#" aria-disabled="true" title="Coming soon">About</a></li>
+      <li><a href="about.html">About</a></li>
     </ul>
   </nav>
 </header>
@@ -62,7 +62,7 @@
 </main>
 
 <footer class="site-footer">
-  <span class="footer-copy">civicwebindex.org</span>
+  <span class="footer-copy">Civic Web Observatory</span>
 </footer>
 
 <script type="module">
@@ -105,7 +105,7 @@ async function main() {
   }
 
   const d = rows[0];
-  document.getElementById("page-title").textContent = `${d.domain} — Civic Web Index`;
+  document.getElementById("page-title").textContent = `${d.domain} — Civic Web Observatory`;
   document.getElementById("d-domain").textContent = d.domain;
 
   const checkedAt = d.checked_at ? new Date(d.checked_at).toLocaleString() : "unknown time";
